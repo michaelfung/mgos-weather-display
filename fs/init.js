@@ -35,7 +35,7 @@ let clock_sync = false;
 let tick_count = 0;
 let forced_off = false;
 let CELCIUS_SYMBOL = 128;  // degree celcius char code
-let current_temp = null;
+let current_temp = '?';
 let current_humid = null;
 let temp_topic = 'weather/hko/tsuenwan/temp';
 let timer_on_begin = Cfg.get('timer.on_hour');
@@ -57,7 +57,6 @@ if (tz_sign === '-') {
     tz_offset = tz_offset * -1;
 }
 Log.print(Log.INFO, 'Local time UTC offset: ' + JSON.stringify(tz_offset) + ' seconds');
-
 
 // check schedule and fire if time reached
 let run_sch = function () {
@@ -86,16 +85,17 @@ let update_display = function () {
         Log.print(Log.INFO, 'update_display: forced off, skip');
         return;
     }
-    let temp_str = '??';
-
-    if (current_temp !== null && current_temp < 100 && current_temp > -100) {        
-        temp_str = JSON.stringify(current_temp);
-        Log.print(Log.INFO, 'update_display: temp_str set to: ' + temp_str);
+    
+    // if (current_temp !== null && current_temp < 100 && current_temp > -100) {        
+    if (current_temp !== null) {                
+        Log.print(Log.INFO, 'update_display: temp: ' + current_temp);
+        show_char(0, CELCIUS_SYMBOL);
+        show_char(1, current_temp.slice(2,3).at(0));
+        show_char(2, current_temp.slice(1,2).at(0));
+        show_char(3, current_temp.slice(0,1).at(0));
+        //show_char(2, current_temp[1]);
+        //show_char(3, current_temp[0]);
     }
-    show_char(0, CELCIUS_SYMBOL);
-    show_char(1, temp_str.at(-1));
-    show_char(2, temp_str.at(-2));
-    show_char(3, temp_str.at(-3));
 };
 
 let toggle_onoff = function () {
@@ -108,14 +108,15 @@ let toggle_onoff = function () {
 };
 
 // MQTT
-GPIO.set_button_handler(ACTION_PIN, GPIO.PULL_UP, GPIO.INT_EDGE_NEG, 500, function (x) {
+GPIO.set_button_handler(ACTION_PIN, GPIO.PULL_UP, GPIO.INT_EDGE_NEG, 200, function (x) {
     Log.print(Log.INFO, 'action button pressed');
     toggle_onoff();
 }, true);
 
 MQTT.sub(temp_topic, function (conn, topic, reading) {
     Log.print(Log.INFO, 'rcvd temperature reading:' + reading);
-    current_temp = Math.floor(reading);  // decimal is not good for elderly
+    // current_temp = Math.floor(reading);  // decimal is not good for elderly
+    current_temp = reading; // assume reading is pre-processed as integer style string
     update_display();
 }, null);
 
@@ -143,9 +144,9 @@ let main_loop_timer = Timer.set(1000 /* 1 sec */, true /* repeat */, function ()
 }, null);
 
 
-show_char(3, 'R'.at(0));
-show_char(2, 'D'.at(0));
-show_char(1, 'Y'.at(0));
-show_char(0, '!'.at(0));
+show_char(3, 'L'.at(0));
+show_char(2, 'O'.at(0));
+show_char(1, 'A'.at(0));
+show_char(0, 'D'.at(0));
 
 Log.print(Log.WARN, "### init script started ###");
