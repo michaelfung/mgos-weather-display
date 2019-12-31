@@ -43,19 +43,23 @@ config_schema:
   - ["wifi.ap.keep_enabled", false]
   - ["sntp.server", "192.168.0.254"]
   - ["debug.udp_log_addr", "192.168.0.1:514"]
-  
-  # auto shut down in case the user forgot
-  - ["nm","o", {title: "Night Mode settings"}]
-  - ["nm.enable", "b", true, {title: "enable night mode?"}]
-  - ["nm.bh", "i", 15, {title: "begin hour"}]
-  - ["nm.bm", "i", 0, {title: "begin min"}]
-  - ["nm.eh", "i", 22, {title: "end hour"}]
-  - ["nm.em", "i", 30, {title: "end min"}]
-  
+    
   - ["timer","o", {title: "Timer settings"}]
   - ["timer.tz", "s", "+0800", {title: "time zone in UTC offset"}]
   # set an auto display period so that user won't have to touch anything
-  - ["timer.sch_enable", "b", true, {title: "enable schedules?"}]
-  
+  - ["timer.on_hour", "i", 6, {title: "auto turn on at this hour"}]
+  - ["timer.off_hour", "i", 22, {title: "auto turn off at this hour"}]
+
+  - ["spi.enable", "b", true, {title: "Enable SPI"}]
+  - ["spi.debug", "b", true, {title: "Debug SPI bus activity"}]
+  - ["spi.unit_no", "i", 3, {title: "SPI Version: 2=HSPI, 3=VSPI"}]
+#  - ["spi.miso_gpio", "i", 12, {title: "GPIO to use for MISO"}]
+#  - ["spi.mosi_gpio", "i", 13, {title: "GPIO to use for MOSI"}]
+#  - ["spi.sclk_gpio", "i", 14, {title: "GPIO to use for SCLK"}]
+#  - ["spi.cs0_gpio", "i", 15, {title: "GPIO to use for CS0"}] 
+  - ["max7219.cs_index", 0]
+  - ["max7219.num_devices", 4]
+
+
 platform: esp32
 
