@@ -35,11 +35,13 @@ let clock_sync = false;
 let tick_count = 0;
 let forced_off = false;
 let CELCIUS_SYMBOL = 128;  // degree celcius char code
-let current_temp = '?';
-let current_humid = null;
+// !!! "reading": buffer for the topic message, if not allocated, unexpected things happen:
+let reading = '---'; 
+let current_temp = '---';
+let current_humid = '---';
 let temp_topic = 'weather/hko/tsuenwan/temp';
-let timer_on_begin = Cfg.get('timer.on_hour');
-let timer_on_end = Cfg.get('timer.off_hour');
+let timer_on_begin = Cfg.get('timer.on_hour') * 60;  // in minutes
+let timer_on_end = Cfg.get('timer.off_hour') * 60;
 
 // ffi functions
 let show_char = ffi('void f_show_char(int, int)');
@@ -85,17 +87,12 @@ let update_display = function () {
         Log.print(Log.INFO, 'update_display: forced off, skip');
         return;
     }
-    
-    // if (current_temp !== null && current_temp < 100 && current_temp > -100) {        
-    if (current_temp !== null) {                
-        Log.print(Log.INFO, 'update_display: temp: ' + current_temp);
-        show_char(0, CELCIUS_SYMBOL);
-        show_char(1, current_temp.slice(2,3).at(0));
-        show_char(2, current_temp.slice(1,2).at(0));
-        show_char(3, current_temp.slice(0,1).at(0));
-        //show_char(2, current_temp[1]);
-        //show_char(3, current_temp[0]);
-    }
+           
+    Log.print(Log.INFO, "update_display: temp is:" + current_temp);
+    show_char(0, CELCIUS_SYMBOL);
+    show_char(1, current_temp.slice(2,3).at(0));
+    show_char(2, current_temp.slice(1,2).at(0));
+    show_char(3, current_temp.slice(0,1).at(0));    
 };
 
 let toggle_onoff = function () {
@@ -114,14 +111,14 @@ GPIO.set_button_handler(ACTION_PIN, GPIO.PULL_UP, GPIO.INT_EDGE_NEG, 200, functi
 }, true);
 
 MQTT.sub(temp_topic, function (conn, topic, reading) {
-    Log.print(Log.INFO, 'rcvd temperature reading:' + reading);
-    // current_temp = Math.floor(reading);  // decimal is not good for elderly
+    //Log.print(Log.INFO, 'rcvd temperature reading:' + reading);
     current_temp = reading; // assume reading is pre-processed as integer style string
+    Log.print(Log.INFO, "mqttsub:temp is now:" + current_temp);
     update_display();
 }, null);
 
 // check sntp sync, to be replaced by sntp event handler after implemented by OS
-let clock_check_timer = Timer.set(30000, true /* repeat */, function () {
+let clock_check_timer = Timer.set(10000, true /* repeat */, function () {
     if (Timer.now() > 1575763200 /* 2018-12-08 */) {
         clock_sync = true;
         Timer.del(clock_check_timer);
@@ -133,16 +130,10 @@ let clock_check_timer = Timer.set(30000, true /* repeat */, function () {
 
 
 // timer loop to update state and run schedule jobs
-let main_loop_timer = Timer.set(1000 /* 1 sec */, true /* repeat */, function () {
-    tick_count++;
-    if ((tick_count % 60) === 0) { /* 1 min */
-        if (clock_sync) run_sch();
-
-        // reset tick count
-        tick_count = 0;
-    }
+let main_loop_timer = Timer.set(60 * 1000 /* 1 sec */, true /* repeat */, function () {
+    // tick_count++;
+    if (clock_sync) run_sch();
 }, null);
-
 
 show_char(3, 'L'.at(0));
 show_char(2, 'O'.at(0));
