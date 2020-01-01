@@ -36,7 +36,7 @@ let tick_count = 0;
 let forced_off = false;
 let CELCIUS_SYMBOL = 128;  // degree celcius char code
 // !!! "reading": buffer for the topic message, if not allocated, unexpected things happen:
-let reading = '---'; 
+//let reading = '---'; 
 let current_temp = '---';
 let current_humid = '---';
 let temp_topic = 'weather/hko/tsuenwan/temp';
@@ -111,8 +111,15 @@ GPIO.set_button_handler(ACTION_PIN, GPIO.PULL_UP, GPIO.INT_EDGE_NEG, 200, functi
 }, true);
 
 MQTT.sub(temp_topic, function (conn, topic, reading) {
-    //Log.print(Log.INFO, 'rcvd temperature reading:' + reading);
-    current_temp = reading; // assume reading is pre-processed as integer style string
+    Log.print(Log.DEBUG, 'rcvd temperature reading:' + reading);
+    
+    // do a data copy instead of adding a reference to the data:
+    current_temp = '';
+    for (let i=0; i<3; i++) {
+        current_temp = current_temp + reading.slice(i, i+1);
+    }
+    //current_temp = reading.slice(0,1) + reading.slice(1,2) + reading.slice(2,3);
+
     Log.print(Log.INFO, "mqttsub:temp is now:" + current_temp);
     update_display();
 }, null);
