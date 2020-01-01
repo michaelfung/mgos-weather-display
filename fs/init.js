@@ -53,8 +53,8 @@ let str2int = ffi('int str2int(char *)');
 // NOTE: str2int('08') gives 0
 let tz = Cfg.get('timer.tz');
 let tz_offset = 0; // in seconds
-let tz_sign = tz.slice(0,1);
-tz_offset = (str2int(tz.slice(1,2)) * 10 * 3600) + (str2int(tz.slice(2,3)) * 3600) + (str2int(tz.slice(3,5)) * 60);
+let tz_sign = tz.slice(0, 1);
+tz_offset = (str2int(tz.slice(1, 2)) * 10 * 3600) + (str2int(tz.slice(2, 3)) * 3600) + (str2int(tz.slice(3, 5)) * 60);
 if (tz_sign === '-') {
     tz_offset = tz_offset * -1;
 }
@@ -87,17 +87,24 @@ let update_display = function () {
         Log.print(Log.INFO, 'update_display: forced off, skip');
         return;
     }
-           
-    Log.print(Log.INFO, "update_display: temp is:" + current_temp);
-    show_char(0, CELCIUS_SYMBOL);
-    show_char(1, current_temp.slice(2,3).at(0));
-    show_char(2, current_temp.slice(1,2).at(0));
-    show_char(3, current_temp.slice(0,1).at(0));    
+
+    if (current_temp === 'ERR') {
+        Log.print(Log.INFO, "update_display: eror reading temp");
+        clear_matrix();
+        show_char(3, 'X'.at(0));
+    }
+    else {
+        Log.print(Log.INFO, "update_display: current temp:" + current_temp);
+        show_char(0, CELCIUS_SYMBOL);
+        show_char(1, current_temp.slice(2, 3).at(0));
+        show_char(2, current_temp.slice(1, 2).at(0));
+        show_char(3, current_temp.slice(0, 1).at(0));
+    }
 };
 
 let toggle_onoff = function () {
     forced_off = !forced_off;
-    if (forced_off) { 
+    if (forced_off) {
         clear_matrix();
     } else {
         update_display();
@@ -112,11 +119,11 @@ GPIO.set_button_handler(ACTION_PIN, GPIO.PULL_UP, GPIO.INT_EDGE_NEG, 200, functi
 
 MQTT.sub(temp_topic, function (conn, topic, reading) {
     Log.print(Log.DEBUG, 'rcvd temperature reading:' + reading);
-    
+
     // do a data copy instead of adding a reference to the data:
     current_temp = '';
-    for (let i=0; i<3; i++) {
-        current_temp = current_temp + reading.slice(i, i+1);
+    for (let i = 0; i < 3; i++) {
+        current_temp = current_temp + reading.slice(i, i + 1);
     }
     //current_temp = reading.slice(0,1) + reading.slice(1,2) + reading.slice(2,3);
 
@@ -142,9 +149,6 @@ let main_loop_timer = Timer.set(60 * 1000 /* 1 sec */, true /* repeat */, functi
     if (clock_sync) run_sch();
 }, null);
 
-show_char(3, 'L'.at(0));
-show_char(2, 'O'.at(0));
-show_char(1, 'A'.at(0));
-show_char(0, 'D'.at(0));
+show_char(3, 0x3); // heart
 
 Log.print(Log.WARN, "### init script started ###");
