@@ -65,7 +65,7 @@ let run_sch = function () {
     let local_now = Math.floor(Timer.now()) + tz_offset;
     // calc current time of day from mg_time
     let min_of_day = Math.floor((local_now % 86400) / 60);
-    Log.print(Log.INFO, "run_sch: Localized current time is " + JSON.stringify(min_of_day) + " minutes of day ");
+    Log.print(Log.DEBUG, "run_sch: Localized current time is " + JSON.stringify(min_of_day) + " minutes of day ");
 
     if (JSON.stringify(min_of_day) === JSON.stringify(timer_on_begin)) {
         Log.print(Log.INFO, '### run_sch: timer on reached, turn on matrix');
