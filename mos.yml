@@ -17,7 +17,6 @@ sources:
 filesystem:
   - fs
 libs:
-    # common mgos libs
   - origin: https://github.com/mongoose-os-libs/http-server
   - origin: https://github.com/mongoose-os-libs/rpc-loopback
   - origin: https://github.com/mongoose-os-libs/mqtt
@@ -31,12 +30,15 @@ libs:
   - origin: https://github.com/mongoose-os-libs/mjs
   - origin: https://github.com/mongoose-os-libs/wifi
   - origin: https://github.com/mongoose-os-libs/sntp
+# special custom lib:
   - origin: https://github.com/michaelfung/max7219-spi
     version: master
 
 
 config_schema:
+  - ["device.id", "wmatrix"]
   - ["mqtt.enable", true]
+  - ["mqtt.client_id", "wmatrix"]
   - ["mqtt.server", "hab2.lan:1883"]
   - ["wifi.ap.enable", false]
   - ["wifi.sta.enable", true]
@@ -62,4 +64,3 @@ config_schema:
 
 
 platform: esp32
-

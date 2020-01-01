@@ -13,3 +13,4 @@ A MQTT server which provides local weather.
 
 ### Example for Hong Kong
 
+Included a perl script to update the district weather at the MQTT server.
