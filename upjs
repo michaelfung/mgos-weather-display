@@ -1,0 +1,1 @@
+mos --port "http://wmatrix.lan/rpc" put fs/init.js

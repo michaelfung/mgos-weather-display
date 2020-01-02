@@ -13,6 +13,8 @@ load('api_log.js');
 load('api_math.js');
 load('api_file.js');
 load('api_rpc.js');
+load('api_esp32_touchpad.js');
+
 
 /*
  * get event values, lookup mongoose.h:
@@ -112,11 +114,6 @@ let toggle_onoff = function () {
 };
 
 // MQTT
-GPIO.set_button_handler(ACTION_PIN, GPIO.PULL_UP, GPIO.INT_EDGE_NEG, 200, function (x) {
-    Log.print(Log.INFO, 'action button pressed');
-    toggle_onoff();
-}, true);
-
 MQTT.sub(temp_topic, function (conn, topic, reading) {
     Log.print(Log.DEBUG, 'rcvd temperature reading:' + reading);
 
@@ -150,5 +147,21 @@ let main_loop_timer = Timer.set(60 * 1000 /* 1 sec */, true /* repeat */, functi
 }, null);
 
 show_char(3, 0x3); // heart
+
+// use touch sensor to toggle display
+let ts = TouchPad.GPIO[33];
+
+TouchPad.init();
+TouchPad.setVoltage(TouchPad.HVOLT_2V5, TouchPad.LVOLT_0V8, TouchPad.HVOLT_ATTEN_1V5);
+TouchPad.config(ts, 0);
+Timer.set(1000 /* 1 sec */, Timer.REPEAT, function () {
+    let tv = TouchPad.read(ts);
+    //Log.print(Log.INFO, 'Sensor ' + ts +  ' value ' + tv);
+    //print('Sensor', ts, 'value', tv);
+    if (tv < 3000) {
+        Log.print(Log.INFO, 'touchpad pressed, value: ' + JSON.stringify(tv));
+        toggle_onoff();
+    }
+}, null);
 
 Log.print(Log.WARN, "### init script started ###");
