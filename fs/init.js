@@ -127,7 +127,7 @@ MQTT.sub(temp_topic, function (conn, topic, reading) {
     for (let i = 0; i < 3; i++) {
         current_temp = current_temp + reading.slice(i, i + 1);
     }
-    
+
     Log.print(Log.INFO, "mqttsub:temp is now:" + current_temp);
     update_display();
 }, null);
