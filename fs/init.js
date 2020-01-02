@@ -32,7 +32,9 @@ load('api_esp32_touchpad.js');
 let MG_EV_MQTT_CONNACK = 202;
 let MG_EV_CLOSE = 5;
 let mqtt_connected = false;
-let ACTION_PIN = 32;
+let ACTION_PIN = 33;
+let SHUT_CMD = 0;
+let RESUME_CMD = 1;
 let clock_sync = false;
 let tick_count = 0;
 let forced_off = false;
@@ -48,6 +50,7 @@ let timer_on_end = Cfg.get('timer.off_hour') * 60;
 // ffi functions
 let show_char = ffi('void f_show_char(int, int)');
 let clear_matrix = ffi('void f_clear_matrix()');
+let shutdown_matrix = ffi('void f_shutdown_matrix(int)');
 let set_brightness = ffi('void f_set_brightness(int)');
 let str2int = ffi('int str2int(char *)');
 
@@ -72,23 +75,25 @@ let run_sch = function () {
     if (JSON.stringify(min_of_day) === JSON.stringify(timer_on_begin)) {
         Log.print(Log.INFO, '### run_sch: timer on reached, turn on matrix');
         forced_off = false;
-        update_display();
+        shutdown_matrix(SHUT_CMD);
+        // update_display();
         return;
     }
 
     if (JSON.stringify(min_of_day) === JSON.stringify(timer_on_end)) {
         Log.print(Log.INFO, '### run_sch: timer off reached, turn off matrix');
         forced_off = true;
-        clear_matrix();
+        shutdown_matrix(RESUME_CMD);
+        //clear_matrix();
         return;
     }
 };
 
 let update_display = function () {
-    if (forced_off) {
-        Log.print(Log.INFO, 'update_display: forced off, skip');
-        return;
-    }
+    // if (forced_off) {
+    //     Log.print(Log.INFO, 'update_display: forced off, skip');
+    //     return;
+    // }
 
     if (current_temp === 'ERR') {
         Log.print(Log.INFO, "update_display: eror reading temp");
@@ -107,9 +112,9 @@ let update_display = function () {
 let toggle_onoff = function () {
     forced_off = !forced_off;
     if (forced_off) {
-        clear_matrix();
+        shutdown_matrix(SHUT_CMD);
     } else {
-        update_display();
+        shutdown_matrix(RESUME_CMD);
     }
 };
 
@@ -122,8 +127,7 @@ MQTT.sub(temp_topic, function (conn, topic, reading) {
     for (let i = 0; i < 3; i++) {
         current_temp = current_temp + reading.slice(i, i + 1);
     }
-    //current_temp = reading.slice(0,1) + reading.slice(1,2) + reading.slice(2,3);
-
+    
     Log.print(Log.INFO, "mqttsub:temp is now:" + current_temp);
     update_display();
 }, null);
@@ -140,7 +144,7 @@ let clock_check_timer = Timer.set(10000, true /* repeat */, function () {
 }, null);
 
 // use touch sensor to toggle display
-let ts = TouchPad.GPIO[33];
+let ts = TouchPad.GPIO[ACTION_PIN];
 TouchPad.init();
 TouchPad.setVoltage(TouchPad.HVOLT_2V5, TouchPad.LVOLT_0V8, TouchPad.HVOLT_ATTEN_1V5);
 TouchPad.config(ts, 0);

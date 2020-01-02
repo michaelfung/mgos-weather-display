@@ -1,7 +1,7 @@
 name: hk_weather_display
 author: Michael Fung <hkuser2001@gmail.com>
 description: Display Hong Kong district weather using LED matrix
-version: 1.0_20200101r2
+version: 1.0_20200102r1
 manifest_version: 2017-09-29
 
 libs_version: ${mos_version}
@@ -33,6 +33,7 @@ libs:
   - origin: https://github.com/mongoose-os-libs/esp32-touchpad  
 # special custom lib:
   - origin: https://github.com/michaelfung/max7219-spi
+    name: max7219-spi
     version: master
 
 

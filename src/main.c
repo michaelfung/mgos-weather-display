@@ -13,6 +13,7 @@
 #include "fontdata.h"
 
 // DATA structs:
+#define MGOS_MAX7219_REG_SHUTDOWN       (0xC)
 #define ON_BOARD_LED 2
 #define NUM_DEVICES 4
 bool mqtt_conn_flag = false;
@@ -77,6 +78,11 @@ void f_clear_matrix()
 void f_set_brightness(int brightness)
 {
   mgos_max7219_set_intensity(matrix, brightness);
+}
+
+void f_shutdown_matrix(int cmd)
+{
+  mgos_max7219_write_all(matrix, MGOS_MAX7219_REG_SHUTDOWN, cmd);
 }
 
 int str2int(char *c)
