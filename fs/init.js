@@ -139,29 +139,30 @@ let clock_check_timer = Timer.set(10000, true /* repeat */, function () {
     }
 }, null);
 
-
-// timer loop to update state and run schedule jobs
-let main_loop_timer = Timer.set(60 * 1000 /* 1 sec */, true /* repeat */, function () {
-    // tick_count++;
-    if (clock_sync) run_sch();
-}, null);
-
-show_char(3, 0x3); // heart
-
 // use touch sensor to toggle display
 let ts = TouchPad.GPIO[33];
-
 TouchPad.init();
 TouchPad.setVoltage(TouchPad.HVOLT_2V5, TouchPad.LVOLT_0V8, TouchPad.HVOLT_ATTEN_1V5);
 TouchPad.config(ts, 0);
-Timer.set(1000 /* 1 sec */, Timer.REPEAT, function () {
+
+// timer loop to update state and run schedule jobs
+let main_loop_timer = Timer.set(1000 /* 1 sec */, Timer.REPEAT, function () {
+    tick_count++;
+
     let tv = TouchPad.read(ts);
-    //Log.print(Log.INFO, 'Sensor ' + ts +  ' value ' + tv);
-    //print('Sensor', ts, 'value', tv);
     if (tv < 3000) {
         Log.print(Log.INFO, 'touchpad pressed, value: ' + JSON.stringify(tv));
         toggle_onoff();
     }
+
+    // every minute
+    if (tick_count % 60 === 0) {
+        tick_count = 0;
+        if (clock_sync) run_sch();
+    }
+
 }, null);
 
+// indicate we are up
+show_char(3, 0x3); // heart
 Log.print(Log.WARN, "### init script started ###");
