@@ -10,6 +10,9 @@ use Modern::Perl '2015';
 use POSIX;
 use Mojo::UserAgent;
 use Net::MQTT::Simple;
+use Sys::Syslog qw(:standard :macros);
+
+openlog('hko-weather', 'ndelay', LOG_USER);
 
 my $mqtt = Net::MQTT::Simple->new("hab2.lan");
 my $hko_url = 'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en';
@@ -28,28 +31,28 @@ while ($tries) {
         my $json = $res->json;
 
         unless ($json) {
-            say "invalid json data";
+            syslog("error", "invalid json data");
             next;
         }
 
         for my $data (@{$json->{temperature}{data}}) {
             if ($data->{place} eq $place) {
                 $current_temp = $data->{value};
-                say "Temperature: " .  $current_temp;
+                syslog("info", "Temperature: " .  $current_temp);
                 $found = 1;
             }
         }
         unless ($found) {
-            say "Error: data not found for location";
+            syslog("error", "Error: data not found for location");
         }
     }
 
     elsif ($res->is_error) {
-        say "Error message=" . $res->message;
+        syslog("error", "Error message=" . $res->message);
     }
 
     else {
-        say "Error: HTTP Code=" . $res->code;
+        syslog("error", "Error: HTTP Code=" . $res->code);
     }
 
     # success, post to MQTT

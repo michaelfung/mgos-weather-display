@@ -38,9 +38,10 @@ let RESUME_CMD = 1;
 let clock_sync = false;
 let tick_count = 0;
 let forced_off = false;
+let last_update = 0;
+let is_stale = true;
 let CELCIUS_SYMBOL = 128;  // degree celcius char code
-// !!! "reading": buffer for the topic message, if not allocated, unexpected things happen:
-//let reading = '---'; 
+let STALE_SYMBOL = 129; // degree celcius staled 
 let current_temp = '---';
 let current_humid = '---';
 let temp_topic = 'weather/hko/tsuenwan/temp';
@@ -99,14 +100,29 @@ let update_display = function () {
         Log.print(Log.INFO, "update_display: eror reading temp");
         clear_matrix();
         show_char(3, 'X'.at(0));
+        return;
+    }
+
+    if (is_stale) {
+        Log.print(Log.INFO, "update_display: stale temp:" + current_temp);
+        show_char(0, STALE_SYMBOL);
     }
     else {
         Log.print(Log.INFO, "update_display: current temp:" + current_temp);
         show_char(0, CELCIUS_SYMBOL);
-        show_char(1, current_temp.slice(2, 3).at(0));
-        show_char(2, current_temp.slice(1, 2).at(0));
-        show_char(3, current_temp.slice(0, 1).at(0));
     }
+
+    show_char(1, current_temp.slice(2, 3).at(0));
+    show_char(2, current_temp.slice(1, 2).at(0));
+    show_char(3, current_temp.slice(0, 1).at(0));
+
+};
+
+let show_lost_conn = function () {
+    clear_matrix();
+    show_char(1,26);
+    show_char(2,19);
+    show_char(3,27);
 };
 
 let toggle_onoff = function () {
@@ -129,7 +145,23 @@ MQTT.sub(temp_topic, function (conn, topic, reading) {
     }
 
     Log.print(Log.INFO, "mqttsub:temp is now:" + current_temp);
+    last_update = Sys.uptime();
+    is_stale = false;
     update_display();
+}, null);
+
+MQTT.setEventHandler(function(conn, ev, edata) {
+    if (ev === MG_EV_MQTT_CONNACK) {
+        mqtt_connected = true;
+        Log.print(Log.INFO, 'MQTT connected');
+        update_display();        
+    }    
+    else if (ev === MG_EV_CLOSE) {
+        mqtt_connected = false;
+        Log.print(Log.ERROR, 'MQTT disconnected');
+        show_lost_conn();
+    }
+
 }, null);
 
 // check sntp sync, to be replaced by sntp event handler after implemented by OS
@@ -162,6 +194,10 @@ let main_loop_timer = Timer.set(1000 /* 1 sec */, Timer.REPEAT, function () {
     // every minute
     if (tick_count % 60 === 0) {
         tick_count = 0;
+        if (mqtt_connected && !is_stale && (last_update < (Sys.uptime() - 1800))) {
+            is_stale = true;
+            update_display();
+        }
         if (clock_sync) run_sch();
     }
 
