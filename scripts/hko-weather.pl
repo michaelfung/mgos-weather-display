@@ -17,52 +17,48 @@ my $place = 'Tsuen Wan Shing Mun Valley';
 my $current_temp;
 my $found = 0;
 my $ua  = Mojo::UserAgent->new;
+my $tries = 3;
 
-my $res = $ua->get($hko_url)->result;
+while ($tries) {
+    $tries--;
+    my $res = $ua->get($hko_url)->result;
 
-if ($res->is_success)  {
-    # say $res->body;
+    if ($res->is_success)  {
+        # extract target place temp:
+        my $json = $res->json;
 
-    # extract target place temp:
-    my $json = $res->json;
+        unless ($json) {
+            say "invalid json data";
+            next;
+        }
 
-    unless ($json) {
-        say "invalid json data";
-        exit;
-    }
-
-    for my $data (@{$json->{temperature}{data}}) {
-        if ($data->{place} eq $place) {
-            $current_temp = $data->{value};
-            say "Temperature: " .  $current_temp;
-            $found = 1;
-            last;
+        for my $data (@{$json->{temperature}{data}}) {
+            if ($data->{place} eq $place) {
+                $current_temp = $data->{value};
+                say "Temperature: " .  $current_temp;
+                $found = 1;
+            }
+        }
+        unless ($found) {
+            say "Error: data not found for location";
         }
     }
-    unless ($found) {
-        say "Error: data not found for location";
+
+    elsif ($res->is_error) {
+        say "Error message=" . $res->message;
     }
-}
 
-elsif ($res->is_error) {
-    say "Error message=" . $res->message;
-}
+    else {
+        say "Error: HTTP Code=" . $res->code;
+    }
 
-else {
-    say "Error: HTTP Code=" . $res->code;
-}
-
-
-# success, post to MQTT
-if ($found) {
-    # format to string of integer
-    my $temp_str = sprintf("%3d", floor($current_temp));
-    $mqtt->retain( "weather/hko/tsuenwan/temp" => "$temp_str");
-}
-
-# success, post to MQTT
-else {
-    $mqtt->retain( "weather/hko/tsuenwan/temp" => "ERR");
+    # success, post to MQTT
+    if ($found) {
+        # format to string of integer
+        my $temp_str = sprintf("%3d", floor($current_temp));
+        $mqtt->retain( "weather/hko/tsuenwan/temp" => "$temp_str");
+        last;
+    }
 }
 
 exit;

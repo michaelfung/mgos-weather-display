@@ -5,7 +5,7 @@
 // 32-126   : ASCII
 // 160-255  : ISO-8859-1, cf. https://en.wikipedia.org/wiki/ISO/IEC_8859-1
 
-const char font8x8_ic8x8u[129][8] = {
+const char font8x8_ic8x8u[130][8] = {
     // ---------------------------  0-127 ---------------------------
     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},  // 0000 (uni0000.dup1)
     {0x7e, 0x81, 0xa5, 0x81, 0xbd, 0x99, 0x81, 0x7e},  // 0001 (uni0001)
@@ -138,4 +138,5 @@ const char font8x8_ic8x8u[129][8] = {
 
     // -- custom --
     {0x40, 0xa0, 0x4e, 0x11, 0x10, 0x10, 0x11, 0x0e},  // 0080 (degree celcius)
+    {0x1f, 0xcf, 0xc7, 0x3b, 0x41, 0x40, 0x40, 0x38},  // 0081 (stale degree celcius)
 };

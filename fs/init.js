@@ -75,7 +75,7 @@ let run_sch = function () {
     if (JSON.stringify(min_of_day) === JSON.stringify(timer_on_begin)) {
         Log.print(Log.INFO, '### run_sch: timer on reached, turn on matrix');
         forced_off = false;
-        shutdown_matrix(SHUT_CMD);
+        shutdown_matrix(RESUME_CMD);
         // update_display();
         return;
     }
@@ -83,7 +83,7 @@ let run_sch = function () {
     if (JSON.stringify(min_of_day) === JSON.stringify(timer_on_end)) {
         Log.print(Log.INFO, '### run_sch: timer off reached, turn off matrix');
         forced_off = true;
-        shutdown_matrix(RESUME_CMD);
+        shutdown_matrix(SHUT_CMD);
         //clear_matrix();
         return;
     }
