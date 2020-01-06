@@ -15,24 +15,12 @@ load('api_file.js');
 load('api_rpc.js');
 load('api_esp32_touchpad.js');
 
-
-/*
- * get event values, lookup mongoose.h:
- *
- * #define MG_MQTT_CMD_CONNACK 2
- * #define MG_MQTT_EVENT_BASE 200
- *
- * #define MG_EV_CLOSE 5
- *
- * #define MG_EV_MQTT_CONNACK (MG_MQTT_EVENT_BASE + MG_MQTT_CMD_CONNACK)
- *
-*/
-
 // define variables
 let MG_EV_MQTT_CONNACK = 202;
 let MG_EV_CLOSE = 5;
 let mqtt_connected = false;
-let ACTION_PIN = 33;
+let ACTION_PIN = 32;
+let ALERT_LED_PIN = 17;
 let SHUT_CMD = 0;
 let RESUME_CMD = 1;
 let clock_sync = false;
@@ -120,9 +108,9 @@ let update_display = function () {
 
 let show_lost_conn = function () {
     clear_matrix();
-    show_char(1,26);
-    show_char(2,19);
-    show_char(3,27);
+    show_char(1, 26);
+    show_char(2, 'X'.at(0));
+    show_char(3, 27);
 };
 
 let toggle_onoff = function () {
@@ -150,13 +138,13 @@ MQTT.sub(temp_topic, function (conn, topic, reading) {
     update_display();
 }, null);
 
-MQTT.setEventHandler(function(conn, ev, edata) {
-    if (ev === MG_EV_MQTT_CONNACK) {
+MQTT.setEventHandler(function (conn, ev, edata) {
+    if (ev === MQTT.EV_CONNACK) {
         mqtt_connected = true;
         Log.print(Log.INFO, 'MQTT connected');
-        update_display();        
-    }    
-    else if (ev === MG_EV_CLOSE) {
+        update_display();
+    }
+    else if (ev === MQTT.EV_CLOSE) {
         mqtt_connected = false;
         Log.print(Log.ERROR, 'MQTT disconnected');
         show_lost_conn();
@@ -202,6 +190,12 @@ let main_loop_timer = Timer.set(1000 /* 1 sec */, Timer.REPEAT, function () {
     }
 
 }, null);
+
+// setup alert LED
+GPIO.set_mode(ALERT_LED_PIN, GPIO.MODE_OUTPUT);
+GPIO.write(ALERT_LED_PIN, 1);
+// GPIO.blink(ALERT_LED_PIN, 100, 900);  // blink: on 100ms, off 900ms
+
 
 // indicate we are up
 show_char(3, 0x3); // heart

@@ -13,15 +13,14 @@
 #include "fontdata.h"
 
 // DATA structs:
-#define MGOS_MAX7219_REG_SHUTDOWN       (0xC)
+#define MGOS_MAX7219_REG_SHUTDOWN (0xC)
 #define ON_BOARD_LED 2
 #define NUM_DEVICES 4
 bool mqtt_conn_flag = false;
 static uint8_t led_timer_ticks = 0; /* for led blinker use */
 const uint8_t nullchars[8] = {
     // max 8 devices
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 uint8_t digits[NUM_DEVICES]; // holds the current shown digits, allow blink in future
 struct mgos_max7219 *matrix = NULL;
 
@@ -104,7 +103,7 @@ void list_fonts()
   //show_char2(matrix, 2, charcode);
 }
 
-static void blink_on_board_led_cb(void *arg)
+/* static void blink_on_board_led_cb(void *arg)
 {
   static uint8_t remainder;
 
@@ -128,6 +127,7 @@ static void blink_on_board_led_cb(void *arg)
 
   (void)arg;
 }
+ */
 
 enum mgos_app_init_result mgos_app_init(void)
 {
@@ -135,7 +135,10 @@ enum mgos_app_init_result mgos_app_init(void)
   // setup HW
   mgos_gpio_setup_output(ON_BOARD_LED, 0);
 
-  if (!(matrix = mgos_max7219_create(mgos_spi_get_global(), mgos_sys_config_get_max7219_cs_index(), mgos_sys_config_get_max7219_num_devices())))
+  if (!(matrix = mgos_max7219_create(
+            mgos_spi_get_global(),
+            mgos_sys_config_get_max7219_cs_index(),
+            mgos_sys_config_get_max7219_num_devices())))
   {
     LOG(LL_ERROR, ("Could not create MAX7219 display"));
     return MGOS_APP_INIT_ERROR;
@@ -143,7 +146,7 @@ enum mgos_app_init_result mgos_app_init(void)
   mgos_max7219_set_intensity(matrix, mgos_sys_config_get_max7219_brightness());
   clear_display();
 
-  mgos_set_timer(200 /* ms */, true /* repeat */, blink_on_board_led_cb, NULL);
+  // mgos_set_timer(200 /* ms */, true /* repeat */, blink_on_board_led_cb, NULL);
   mgos_mqtt_add_global_handler(mqtt_ev_handler, NULL);
 
   return MGOS_APP_INIT_SUCCESS;
