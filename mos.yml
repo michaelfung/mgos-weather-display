@@ -1,7 +1,7 @@
 name: hk_weather_display
 author: Michael Fung <hkuser2001@gmail.com>
 description: Display weather using LED matrix
-version: 1.0_20200106r1
+version: 1.0_20200113r1
 manifest_version: 2017-09-29
 
 libs_version: ${mos_version}
@@ -31,11 +31,8 @@ libs:
   - origin: https://github.com/mongoose-os-libs/wifi
   - origin: https://github.com/mongoose-os-libs/sntp
   - origin: https://github.com/mongoose-os-libs/esp32-touchpad  
-# special custom lib:
-  - origin: https://github.com/michaelfung/max7219-spi
-    name: max7219-spi
-    version: master
-
+  - origin: https://github.com/mongoose-os-libs/arduino-compat
+  - origin: https://github.com/mongoose-os-libs/arduino-spi
 
 config_schema:
   - ["device.id", "wmatrix"]
@@ -53,15 +50,12 @@ config_schema:
   # set an auto display period so that user won't have to touch anything
   - ["timer.on_hour", "i", 6, {title: "auto turn on at this hour"}]
   - ["timer.off_hour", "i", 22, {title: "auto turn off at this hour"}]
-
-  - ["spi.enable", "b", true, {title: "Enable SPI"}]
-  - ["spi.debug", "b", true, {title: "Debug SPI bus activity"}]
-  - ["spi.unit_no", "i", 3, {title: "SPI Version: 2=HSPI, 3=VSPI"}]
-#  - ["spi.miso_gpio", "i", 12, {title: "GPIO to use for MISO"}]
-#  - ["spi.mosi_gpio", "i", 13, {title: "GPIO to use for MOSI"}]
-#  - ["spi.sclk_gpio", "i", 14, {title: "GPIO to use for SCLK"}]
-#  - ["spi.cs0_gpio", "i", 15, {title: "GPIO to use for CS0"}] 
-  - ["max7219.cs_index", 0]
-  - ["max7219.num_devices", 4]
+  # use VSPI:
+  - ["spi.unit_no", 3]
+  - ["spi.miso_gpio", 19]
+  - ["spi.mosi_gpio", 23]
+  - ["spi.sclk_gpio", 18]
+  - ["spi.cs0_gpio", 5]
+  - ["spi.debug", true]  
 
 platform: esp32
