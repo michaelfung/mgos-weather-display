@@ -14,6 +14,7 @@ tags:
   - js
 sources:
   - src
+  - MD_MAX72xx
 filesystem:
   - fs
 libs:
@@ -57,5 +58,9 @@ config_schema:
   - ["spi.sclk_gpio", 18]
   - ["spi.cs0_gpio", 5]
   - ["spi.debug", true]  
+  # max72xx device settings
+  - ["max72xx","o", {title: "max72xx settings"}]  
+  - ["max72xx.brightness", "i", 1, {title: "LED brightness, 0~15"}]
+  - ["max72xx.scroll_delay", "i", 100, {title: "Scroll delay in ms"}]
 
 platform: esp32
