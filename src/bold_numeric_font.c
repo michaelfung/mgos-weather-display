@@ -35,22 +35,22 @@ const uint8_t bold_numeric_font[] =
         0,                                                 // null, blank
         0,                                                 // null, blank
         0,                                                 // null, blank
-        0,                                                 // null, blank
-        0,                                                 // null, blank
-        0,                                                 // null, blank
-        0,                                                 // null, blank
-        0,                                                 // null, blank
+        7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,       // 0020 (space)
+        7, 0x30, 0x78, 0x78, 0x30, 0x30, 0x00, 0x30,       // 0021 (exclam)
+        7, 0x6c, 0x6c, 0x6c, 0x00, 0x00, 0x00, 0x00,       // 0022 (quotedbl)
+        7, 0x6c, 0x6c, 0xfe, 0x6c, 0xfe, 0x6c, 0x6c,       // 0023 (numbersign)
+        7, 0x30, 0x7c, 0xc0, 0x78, 0x0c, 0xf8, 0x30,       // 0024 (dollar)
         7, 0x00, 0xc6, 0xcc, 0x18, 0x30, 0x66, 0xc6,       // 0025 (percent)
-        0,                                                 // null, blank
-        0,                                                 // null, blank
-        0,                                                 // null, blank
-        0,                                                 // null, blank
-        0,                                                 // null, blank
-        0,                                                 // null, blank
-        0,                                                 // null, blank
-        0,                                                 // null, blank
+        7, 0x38, 0x6c, 0x38, 0x76, 0xdc, 0xcc, 0x76,       // 0026 (ampersand)
+        7, 0x60, 0x60, 0xc0, 0x00, 0x00, 0x00, 0x00,       // 0027 (quotesingle)
+        7, 0x18, 0x30, 0x60, 0x60, 0x60, 0x30, 0x18,       // 0028 (parenleft)
+        7, 0x60, 0x30, 0x18, 0x18, 0x18, 0x30, 0x60,       // 0029 (parenright)
+        7, 0x00, 0x66, 0x3c, 0xff, 0x3c, 0x66, 0x00,       // 002a (asterisk)
+        7, 0x00, 0x30, 0x30, 0xfc, 0x30, 0x30, 0x00,       // 002b (plus)
+        8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x30, 0x30, 0x60, // 002c (comma)
+        7, 0x00, 0x00, 0x00, 0xfc, 0x00, 0x00, 0x00,       // 002d (hyphen)
         7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x30, 0x30,       // 002e (period)
-        0,                                                 // null, blank
+        7, 0x06, 0x0c, 0x18, 0x30, 0x60, 0xc0, 0x80,       // 002f (slash)
         7, 0x7c, 0xc6, 0xce, 0xde, 0xf6, 0xe6, 0x7c,       // 0030 (zero)
         7, 0x30, 0x70, 0x30, 0x30, 0x30, 0x30, 0xfc,       // 0031 (one)
         7, 0x78, 0xcc, 0x0c, 0x38, 0x60, 0xc4, 0xfc,       // 0032 (two)
