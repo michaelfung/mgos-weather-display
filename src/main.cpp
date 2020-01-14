@@ -234,13 +234,11 @@ extern "C" void f_show_char(int device_no, int c)
 }
 
 // rotate all device buffer and display
-extern "C" void f_rotate(char *msg)
+extern "C" void f_rotate()
 {
     mx.transform(MD_MAX72XX::TRC);
     mx.update();
 }
-
-
 
 extern "C" void f_scroll_text(char *msg)
 {
@@ -315,14 +313,14 @@ extern "C" enum mgos_app_init_result mgos_app_init(void)
     mx.setShiftDataInCallback(scrollDataSource);
     mx.setShiftDataOutCallback(scrollDataSink);
 
-    // display boot up logo
-    strcpy(curMessage, "v0.1");
-    printText(0, MAX_DEVICES - 1, curMessage);
-
     // auto update buffer to device off:
     mx.control(0, MAX_DEVICES - 1, MD_MAX72XX::UPDATE, MD_MAX72XX::OFF);
     // default to bold numeric font as it is used most
     setBoldNumericFont();
+
+    // display boot up logo, one heart    
+    f_show_char(0, 0x03); // heart
+    f_rotate();
 
     return MGOS_APP_INIT_SUCCESS;
 }

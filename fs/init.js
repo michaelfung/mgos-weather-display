@@ -30,8 +30,8 @@ let last_update = 0;
 let is_stale = true;
 let CELCIUS_SYMBOL = 0x4;  // degree celcius char code
 let STALE_SYMBOL = 0x5; // degree celcius staled 
-let current_temp = '000';
-let current_humid = '000';
+let current_temp = '---';
+let current_humid = '---';
 let temp_topic = 'weather/hko/tsuenwan/temp';
 let timer_on_begin = Cfg.get('timer.on_hour') * 60;  // in minutes
 let timer_on_end = Cfg.get('timer.off_hour') * 60;
@@ -90,7 +90,7 @@ let update_display = function () {
     if (current_temp === 'ERR') {
         Log.print(Log.INFO, "update_display: eror reading temp");
         
-        show_char(3, '0'.at(0));
+        show_char(3, '#'.at(0));
         return;
     }
 
@@ -111,6 +111,7 @@ let update_display = function () {
 
 let show_lost_conn = function () {
     clear_matrix();
+    // use max72xx sys font and print string
     show_char(1, 26);
     show_char(2, '0'.at(0));
     show_char(3, 27);
@@ -200,8 +201,8 @@ GPIO.write(ALERT_LED_PIN, 1);
 // GPIO.blink(ALERT_LED_PIN, 100, 900);  // blink: on 100ms, off 900ms
 
 
-// indicate we are up
-clear_matrix();
+// indicate we are up, 2 hearts
 show_char(0, 0x3); // heart
+show_char(1, 0x3); // heart
 rotate_char(); 
 Log.print(Log.WARN, "### init script started ###");
