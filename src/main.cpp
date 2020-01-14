@@ -11,26 +11,11 @@
 #include <Arduino.h>
 #include <MD_MAX72xx.h>
 #include <SPI.h>
+#include "bold_numeric_font.h"
 
 // DATA structs:
 #define ON_BOARD_LED 2
 bool mqtt_conn_flag = false;
-
-const uint8_t bold_numeric_font[] =
-    {
-        'F', 1, 48, 57, 8,
-
-        7, 0x7c, 0xc6, 0xce, 0xde, 0xf6, 0xe6, 0x7c, // 0030 (zero)
-        7, 0x30, 0x70, 0x30, 0x30, 0x30, 0x30, 0xfc, // 0031 (one)
-        7, 0x78, 0xcc, 0x0c, 0x38, 0x60, 0xc4, 0xfc, // 0032 (two)
-        7, 0x78, 0xcc, 0x0c, 0x38, 0x0c, 0xcc, 0x78, // 0033 (three)
-        7, 0x1c, 0x3c, 0x6c, 0xcc, 0xfe, 0x0c, 0x1e, // 0034 (four)
-        7, 0xfc, 0xc0, 0xf8, 0x0c, 0x0c, 0xcc, 0x78, // 0035 (five)
-        7, 0x38, 0x60, 0xc0, 0xf8, 0xcc, 0xcc, 0x78, // 0036 (six)
-        7, 0xfc, 0xcc, 0x0c, 0x18, 0x30, 0x30, 0x30, // 0037 (seven)
-        7, 0x78, 0xcc, 0xcc, 0x78, 0xcc, 0xcc, 0x78, // 0038 (eight)
-        7, 0x78, 0xcc, 0xcc, 0x7c, 0x0c, 0x18, 0x70, // 0039 (nine)
-};
 
 // for use with: void mgos_clear_timer(mgos_timer_id id);
 static mgos_timer_id scroll_timer_id = 0;
@@ -49,7 +34,9 @@ static mgos_timer_id blink_display_timer_id = 0;
 // need to be adapted
 #define HARDWARE_TYPE MD_MAX72XX::FC16_HW
 #define MAX_DEVICES 4
-#define CS_PIN 5 // or SS
+#define CLK_PIN 18  // or SCK
+#define DATA_PIN 23 // or MOSI
+#define CS_PIN 5    // or SS
 
 // SPI hardware interface
 MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
@@ -232,43 +219,44 @@ static void setBoldNumericFont()
     mx.setFont(bold_numeric_font);
 }
 
-static void blink_display_all()
-{
-    blink_display_timer_id = mgos_set_timer(200 /* ms */, MGOS_TIMER_REPEAT, blink_display_cb, NULL);
-}
-
-static void testClearDisplay()
-{
-    mx.clear();
-    mx.update();
-}
-
-// functions:
-static void mqtt_ev_handler(struct mg_connection *c, int ev, void *p, void *user_data)
-{
-    struct mg_mqtt_message *msg = (struct mg_mqtt_message *)p;
-    if (ev == MG_EV_MQTT_CONNACK)
-    {
-        LOG(LL_INFO, ("CONNACK: %d", msg->connack_ret_code));
-        mqtt_conn_flag = true;
-    }
-    else if (ev == MG_EV_CLOSE)
-    {
-        mqtt_conn_flag = false;
-    }
-    (void)user_data;
-    (void)c;
-}
-
 // ffi functions:
 // put a character on a specific device, harcoded for show bold numeric font
 extern "C" void f_show_char(int device_no, int c)
 {
     int col = ((MAX_DEVICES - device_no) * 8) - 1;
-
+    setBoldNumericFont();
     mx.setChar(col, c);
-    mx.transform(MD_MAX72XX::TRC);
+    //mx.transform(MD_MAX72XX::TRC);
+    mx.transform(device_no, MD_MAX72XX::TRC);
     mx.update(device_no);
+}
+
+extern "C" void f_scroll_text(char *msg)
+{
+    mx.setFont(nullptr); // back to sys font
+    scrollTextLeft(msg);
+}
+
+extern "C" void f_stop_scroll_text(char *msg)
+{
+    mgos_clear_timer(scroll_timer_id);
+    setBoldNumericFont();    
+}
+
+// blink display with <interval> ms, set <interval> to stop blink
+extern "C" void f_blink_display_all(int interval)
+{
+    if (interval > 0)
+    {
+        if (interval < 100)
+            interval = 100;
+        blink_display_timer_id = mgos_set_timer(interval /* ms */, MGOS_TIMER_REPEAT, blink_display_cb, NULL);
+    }
+    else
+    {
+        mgos_clear_timer(blink_display_timer_id);
+        mx.control(MD_MAX72XX::SHUTDOWN, MD_MAX72XX::OFF);
+    }
 }
 
 extern "C" void f_clear_matrix()
@@ -284,17 +272,19 @@ extern "C" void f_set_brightness(int brightness)
 
 extern "C" void f_shutdown_matrix(int cmd)
 {
-    mx.control(MD_MAX72XX::SHUTDOWN, MD_MAX72XX::ON); // scroll left
+    if (cmd > 0)
+    {
+        mx.control(MD_MAX72XX::SHUTDOWN, MD_MAX72XX::ON); // shut it
+    }
+    else
+    {
+        mx.control(MD_MAX72XX::SHUTDOWN, MD_MAX72XX::OFF); // resume
+    }
 }
 
 extern "C" int str2int(char *c)
 {
     return (int)strtol(c, NULL, 10);
-}
-
-extern "C" int mqtt_connected(void)
-{
-    return (int)mqtt_conn_flag;
 }
 
 /* --- finally, main entry --- */
@@ -311,8 +301,14 @@ extern "C" enum mgos_app_init_result mgos_app_init(void)
     mx.setShiftDataInCallback(scrollDataSource);
     mx.setShiftDataOutCallback(scrollDataSink);
 
+    // display boot up logo
+    strcpy(curMessage, "v0.1");
+    printText(0, MAX_DEVICES - 1, curMessage);
+
     // auto update buffer to device off:
     mx.control(0, MAX_DEVICES - 1, MD_MAX72XX::UPDATE, MD_MAX72XX::OFF);
+    // default to bold numeric font as it is used most
+    setBoldNumericFont();
 
     return MGOS_APP_INIT_SUCCESS;
 }

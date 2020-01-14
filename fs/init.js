@@ -28,10 +28,10 @@ let tick_count = 0;
 let forced_off = false;
 let last_update = 0;
 let is_stale = true;
-let CELCIUS_SYMBOL = 128;  // degree celcius char code
-let STALE_SYMBOL = 129; // degree celcius staled 
-let current_temp = '---';
-let current_humid = '---';
+let CELCIUS_SYMBOL = 0x4;  // degree celcius char code
+let STALE_SYMBOL = 0x5; // degree celcius staled 
+let current_temp = '000';
+let current_humid = '000';
 let temp_topic = 'weather/hko/tsuenwan/temp';
 let timer_on_begin = Cfg.get('timer.on_hour') * 60;  // in minutes
 let timer_on_end = Cfg.get('timer.off_hour') * 60;
@@ -84,32 +84,33 @@ let update_display = function () {
     //     return;
     // }
 
+    clear_matrix();
+
     if (current_temp === 'ERR') {
         Log.print(Log.INFO, "update_display: eror reading temp");
-        clear_matrix();
-        show_char(3, 'X'.at(0));
+        
+        show_char(3, '0'.at(0));
         return;
     }
 
     if (is_stale) {
         Log.print(Log.INFO, "update_display: stale temp:" + current_temp);
-        show_char(0, STALE_SYMBOL);
+        show_char(3, STALE_SYMBOL);
     }
     else {
         Log.print(Log.INFO, "update_display: current temp:" + current_temp);
-        show_char(0, CELCIUS_SYMBOL);
+        show_char(3, CELCIUS_SYMBOL);
     }
 
-    show_char(1, current_temp.slice(2, 3).at(0));
-    show_char(2, current_temp.slice(1, 2).at(0));
-    show_char(3, current_temp.slice(0, 1).at(0));
-
+    show_char(2, current_temp.slice(2, 3).at(0));
+    show_char(1, current_temp.slice(1, 2).at(0));
+    show_char(0, current_temp.slice(0, 1).at(0));
 };
 
 let show_lost_conn = function () {
     clear_matrix();
     show_char(1, 26);
-    show_char(2, 'X'.at(0));
+    show_char(2, '0'.at(0));
     show_char(3, 27);
 };
 
@@ -198,5 +199,6 @@ GPIO.write(ALERT_LED_PIN, 1);
 
 
 // indicate we are up
-show_char(3, 0x3); // heart
+clear_matrix();
+show_char(0, 0x3); // heart
 Log.print(Log.WARN, "### init script started ###");
