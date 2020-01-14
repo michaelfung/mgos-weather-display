@@ -216,20 +216,31 @@ static void scrollTextLeft(const char *msg)
 // custom font, use  mx.setFont(nullptr); to reset to default font
 static void setBoldNumericFont()
 {
+    LOG(LL_INFO, ("setBoldNumericFont"));
     mx.setFont(bold_numeric_font);
 }
 
 // ffi functions:
-// put a character on a specific device, harcoded for show bold numeric font
+// put a character on a specific device buffer
 extern "C" void f_show_char(int device_no, int c)
 {
     int col = ((MAX_DEVICES - device_no) * 8) - 1;
     setBoldNumericFont();
     mx.setChar(col, c);
+    LOG(LL_INFO, ("show char code %d at col %d", c, col));
     //mx.transform(MD_MAX72XX::TRC);
-    mx.transform(device_no, MD_MAX72XX::TRC);
-    mx.update(device_no);
+    //mx.transform(device_no, MD_MAX72XX::TRC);
+    //mx.update();
 }
+
+// rotate all device buffer and display
+extern "C" void f_rotate(char *msg)
+{
+    mx.transform(MD_MAX72XX::TRC);
+    mx.update();
+}
+
+
 
 extern "C" void f_scroll_text(char *msg)
 {
@@ -261,6 +272,7 @@ extern "C" void f_blink_display_all(int interval)
 
 extern "C" void f_clear_matrix()
 {
+    LOG(LL_INFO, ("clear matrix"));
     mx.clear();
     mx.update();
 }
@@ -291,6 +303,8 @@ extern "C" int str2int(char *c)
 extern "C" enum mgos_app_init_result mgos_app_init(void)
 {
     mx.begin();
+
+    LOG(LL_INFO,("max72xx device count:%d, col count: %d", mx.getDeviceCount(), mx.getColumnCount()));
 
     mx.control(0, MAX_DEVICES - 1,
                MD_MAX72XX::INTENSITY,
