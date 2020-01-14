@@ -1,14 +1,18 @@
+/*
+ * Bold IBM CGA font
+ * Partially adapted to save space and work
+ */
 #include "mgos.h"
 
 const uint8_t bold_numeric_font[] =
     {
-        'F', 1, 0, 57, 8,
+        'F', 1, 0, 88, 8,
         0,                                                 // null, blank
         0,                                                 // null, blank
         0,                                                 // null, blank
         7, 0x6c, 0xfe, 0xfe, 0xfe, 0x7c, 0x38, 0x10,       // 0003 (heart)
-        8, 0x40, 0xa0, 0x4e, 0x11, 0x10, 0x10, 0x11, 0x0e, // 0004 (degree celcius)
-        8, 0x1f, 0xcf, 0xc7, 0x3b, 0x41, 0x40, 0x40, 0x38, // 0005 (stale degree celcius)
+        7, 0x40, 0x1c, 0x22, 0x20, 0x20, 0x22, 0x1c,       // 0004 (degree celcius)
+        7, 0x40, 0x1c, 0x22, 0x0, 0x0, 0x0, 0x0,           // 0005 (stale degree celcius)
         0,                                                 // null, blank
         0,                                                 // null, blank
         0,                                                 // null, blank
@@ -61,4 +65,35 @@ const uint8_t bold_numeric_font[] =
         7, 0xfc, 0xcc, 0x0c, 0x18, 0x30, 0x30, 0x30,       // 0037 (seven)
         7, 0x78, 0xcc, 0xcc, 0x78, 0xcc, 0xcc, 0x78,       // 0038 (eight)
         7, 0x78, 0xcc, 0xcc, 0x7c, 0x0c, 0x18, 0x70,       // 0039 (nine)
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        0,                                                 // null, blank
+        7, 0xc6, 0xc6, 0x6c, 0x38, 0x38, 0x6c, 0xc6,       // 0058, (X)
 };
