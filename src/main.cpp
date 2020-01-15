@@ -261,12 +261,14 @@ extern "C" void f_scroll_text(char *msg)
         len = BUF_SIZE - 1;
     strncpy(curMessage, msg, len);
     mx.setFont(nullptr); // back to sys font
+    mx.control(0, MAX_DEVICES - 1, MD_MAX72XX::UPDATE, MD_MAX72XX::ON);
     scrollTextLeft();
 }
 
 extern "C" void f_stop_scroll_text()
 {
     mgos_clear_timer(scroll_timer_id);
+    mx.control(0, MAX_DEVICES - 1, MD_MAX72XX::UPDATE, MD_MAX72XX::OFF);
     setBoldNumericFont();
 }
 

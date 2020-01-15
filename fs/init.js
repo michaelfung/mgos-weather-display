@@ -47,7 +47,7 @@ let op_mode = MODE.NORMAL;  // default in normal mode
 // reminder schedules
 // they must not be too close together to allow user time to acknowlege
 let rem_sch = [
-    { name: "test", enable: true, msg: "test reminder message", hour: 14, min: 13 },
+    { name: "test", enable: true, msg: "test reminder message ", hour: 15, min: 18 },
     { name: "med", enable: true, msg: "take night time medicine", hour: 21, min: 30 }
 ];
 
