@@ -216,7 +216,7 @@ static void scrollTextLeft(const char *msg)
 // custom font, use  mx.setFont(nullptr); to reset to default font
 static void setBoldNumericFont()
 {
-    LOG(LL_INFO, ("setBoldNumericFont"));
+    LOG(LL_DEBUG, ("setBoldNumericFont"));
     mx.setFont(bold_numeric_font);
 }
 
@@ -227,7 +227,7 @@ extern "C" void f_show_char(int device_no, int c)
     int col = ((MAX_DEVICES - device_no) * 8) - 1;
     setBoldNumericFont();
     mx.setChar(col, c);
-    LOG(LL_INFO, ("show char code %d at col %d", c, col));
+    LOG(LL_DEBUG, ("show char code %d at col %d", c, col));
     //mx.transform(MD_MAX72XX::TRC);
     //mx.transform(device_no, MD_MAX72XX::TRC);
     //mx.update();
@@ -270,7 +270,7 @@ extern "C" void f_blink_display_all(int interval)
 
 extern "C" void f_clear_matrix()
 {
-    LOG(LL_INFO, ("clear matrix"));
+    LOG(LL_DEBUG, ("clear matrix"));
     mx.clear();
     mx.update();
 }
@@ -313,7 +313,7 @@ extern "C" enum mgos_app_init_result mgos_app_init(void)
     mx.setShiftDataInCallback(scrollDataSource);
     mx.setShiftDataOutCallback(scrollDataSink);
 
-    // auto update buffer to device off:
+    // set auto update buffer to device to OFF:
     mx.control(0, MAX_DEVICES - 1, MD_MAX72XX::UPDATE, MD_MAX72XX::OFF);
     // default to bold numeric font as it is used most
     setBoldNumericFont();
