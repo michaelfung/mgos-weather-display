@@ -39,6 +39,7 @@ let timer_on_end = Cfg.get('timer.off_hour') * 60;
 // ffi functions
 let show_char = ffi('void f_show_char(int, int)');
 let rotate_char = ffi('void f_rotate()');
+let print_string = ffi('void f_print_string(char *)');
 let clear_matrix = ffi('void f_clear_matrix()');
 let shutdown_matrix = ffi('void f_shutdown_matrix(int)');
 let set_brightness = ffi('void f_set_brightness(int)');
@@ -112,9 +113,7 @@ let update_display = function () {
 let show_lost_conn = function () {
     clear_matrix();
     // use max72xx sys font and print string
-    show_char(1, 26);
-    show_char(2, '0'.at(0));
-    show_char(3, 27);
+    print_string(chr(27) + "-X-" + chr(26));
 };
 
 let toggle_onoff = function () {

@@ -16,6 +16,11 @@ A MQTT server which provides local weather.
 
 Included a perl script to update the district weather at the MQTT server.
 
+## Test
+
+    mosquitto_pub -d -h hab2.lan -t "weather/hko/tsuenwan/temp" -m " 19"
+
+
 ## Build Notes
 
 To compile with custom library, add it to `mos.yml` like:

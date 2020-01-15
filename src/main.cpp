@@ -63,7 +63,7 @@ void printText(uint8_t modStart, uint8_t modEnd, char *pMsg)
     uint8_t cBuf[8];
     int16_t col = ((modEnd + 1) * COL_SIZE) - 1;
 
-    mx.control(modStart, modEnd, MD_MAX72XX::UPDATE, MD_MAX72XX::OFF);
+    //mx.control(modStart, modEnd, MD_MAX72XX::UPDATE, MD_MAX72XX::OFF);
 
     do // finite state machine to print the characters in the space available
     {
@@ -112,7 +112,7 @@ void printText(uint8_t modStart, uint8_t modEnd, char *pMsg)
         }
     } while (col >= (modStart * COL_SIZE));
 
-    mx.control(modStart, modEnd, MD_MAX72XX::UPDATE, MD_MAX72XX::ON);
+    // mx.control(modStart, modEnd, MD_MAX72XX::UPDATE, MD_MAX72XX::ON);
 }
 
 void scrollDataSink(uint8_t dev, MD_MAX72XX::transformType_t t, uint8_t col)
@@ -220,12 +220,13 @@ static void setBoldNumericFont()
     mx.setFont(bold_numeric_font);
 }
 
-// ffi functions:
+/* --- ffi functions --- */
+
 // put a character on a specific device buffer
 extern "C" void f_show_char(int device_no, int c)
 {
     int col = ((MAX_DEVICES - device_no) * 8) - 1;
-    setBoldNumericFont();
+    // setBoldNumericFont();
     mx.setChar(col, c);
     LOG(LL_DEBUG, ("show char code %d at col %d", c, col));
     //mx.transform(MD_MAX72XX::TRC);
@@ -240,6 +241,19 @@ extern "C" void f_rotate()
     mx.update();
 }
 
+// print a string with max length of BUF_SIZE
+extern "C" void f_print_string(char *msg)
+{
+    int len = strlen(msg);
+    if (len > BUF_SIZE)
+        len = BUF_SIZE - 1;
+    strncpy(curMessage, msg, len);
+    mx.setFont(nullptr);
+    printText(0, MAX_DEVICES - 1, curMessage);
+    mx.update();
+    setBoldNumericFont();
+}
+
 extern "C" void f_scroll_text(char *msg)
 {
     mx.setFont(nullptr); // back to sys font
@@ -249,7 +263,7 @@ extern "C" void f_scroll_text(char *msg)
 extern "C" void f_stop_scroll_text(char *msg)
 {
     mgos_clear_timer(scroll_timer_id);
-    setBoldNumericFont();    
+    setBoldNumericFont();
 }
 
 // blink display with <interval> ms, set <interval> to stop blink
@@ -280,6 +294,7 @@ extern "C" void f_set_brightness(int brightness)
     mx.control(0, MAX_DEVICES - 1, MD_MAX72XX::INTENSITY, brightness);
 }
 
+// shutdown or resume display if <cmd> set to 1
 extern "C" void f_shutdown_matrix(int cmd)
 {
     if (cmd > 0)
@@ -302,7 +317,7 @@ extern "C" enum mgos_app_init_result mgos_app_init(void)
 {
     mx.begin();
 
-    LOG(LL_INFO,("max72xx device count:%d, col count: %d", mx.getDeviceCount(), mx.getColumnCount()));
+    LOG(LL_INFO, ("max72xx device count:%d, col count: %d", mx.getDeviceCount(), mx.getColumnCount()));
 
     mx.control(0, MAX_DEVICES - 1,
                MD_MAX72XX::INTENSITY,
@@ -318,7 +333,7 @@ extern "C" enum mgos_app_init_result mgos_app_init(void)
     // default to bold numeric font as it is used most
     setBoldNumericFont();
 
-    // display boot up logo, one heart    
+    // display boot up logo, one heart
     f_show_char(0, 0x03); // heart
     f_rotate();
 
