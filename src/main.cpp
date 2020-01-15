@@ -207,9 +207,9 @@ static void blink_display_cb(void *arg)
     (void)arg;
 }
 
-static void scrollTextLeft(const char *msg)
+static void scrollTextLeft()
 {
-    strcpy(curMessage, msg);
+    //strcpy(curMessage, msg);
     scroll_timer_id = mgos_set_timer(scroll_delay /* ms */, MGOS_TIMER_REPEAT, scroll_left_cb, NULL);
 }
 
@@ -256,11 +256,15 @@ extern "C" void f_print_string(char *msg)
 
 extern "C" void f_scroll_text(char *msg)
 {
+    int len = strlen(msg);
+    if (len > BUF_SIZE)
+        len = BUF_SIZE - 1;
+    strncpy(curMessage, msg, len);
     mx.setFont(nullptr); // back to sys font
-    scrollTextLeft(msg);
+    scrollTextLeft();
 }
 
-extern "C" void f_stop_scroll_text(char *msg)
+extern "C" void f_stop_scroll_text()
 {
     mgos_clear_timer(scroll_timer_id);
     setBoldNumericFont();

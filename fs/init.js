@@ -36,10 +36,27 @@ let temp_topic = 'weather/hko/tsuenwan/temp';
 let timer_on_begin = Cfg.get('timer.on_hour') * 60;  // in minutes
 let timer_on_end = Cfg.get('timer.off_hour') * 60;
 
+// operation mode
+let MODE = {
+    TEST: 0,
+    NORMAL: 1, // show temp
+    REMIND: 2  // show reminder
+};
+let op_mode = MODE.NORMAL;  // default in normal mode
+
+// reminder schedules
+// they must not be too close together to allow user time to acknowlege
+let rem_sch = [
+    { name: "test", enable: true, msg: "test reminder message", hour: 14, min: 13 },
+    { name: "med", enable: true, msg: "take night time medicine", hour: 21, min: 30 }
+];
+
 // ffi functions
 let show_char = ffi('void f_show_char(int, int)');
 let rotate_char = ffi('void f_rotate()');
 let print_string = ffi('void f_print_string(char *)');
+let scroll_text = ffi('void f_scroll_text(char *)');
+let stop_scroll_text = ffi('void f_stop_scroll_text()');
 let clear_matrix = ffi('void f_clear_matrix()');
 let shutdown_matrix = ffi('void f_shutdown_matrix(int)');
 let set_brightness = ffi('void f_set_brightness(int)');
@@ -63,44 +80,75 @@ let run_sch = function () {
     let min_of_day = Math.floor((local_now % 86400) / 60);
     Log.print(Log.DEBUG, "run_sch: Localized current time is " + JSON.stringify(min_of_day) + " minutes of day ");
 
+    // on sch
     if (JSON.stringify(min_of_day) === JSON.stringify(timer_on_begin)) {
         Log.print(Log.INFO, '### run_sch: timer on reached, turn on matrix');
         forced_off = false;
-        shutdown_matrix(RESUME_CMD);
-        // update_display();
+        shutdown_matrix(RESUME_CMD);        
         return;
     }
 
+    // off sch
     if (JSON.stringify(min_of_day) === JSON.stringify(timer_on_end)) {
         Log.print(Log.INFO, '### run_sch: timer off reached, turn off matrix');
         forced_off = true;
-        shutdown_matrix(SHUT_CMD);
-        //clear_matrix();
-        return;
+        if (op_mode === MODE.NORMAL) {
+            shutdown_matrix(SHUT_CMD);                     
+        }
+        else if (op_mode === MODE.REMIND) {
+            Log.print(Log.INFO, '### run_sch: not in NORMAL mode, skip turn off');
+        }
     }
+
+    // reminder sch
+    for (let i = 0; i < rem_sch.length; i++ ) {
+        if (JSON.stringify(min_of_day) === JSON.stringify(rem_sch[i].hour * 60 + rem_sch[i].min)) {
+            if (rem_sch[i].enable) {
+                Log.print(Log.INFO, '### run_sch: reminder fire: ' + rem_sch[i].name);                
+                show_reminder(rem_sch[i].msg);
+                break;  // no two reminder overlap
+
+            } else {
+                Log.print(Log.INFO, '### run_sch: reminder disabled: ' + rem_sch[i].name);
+            }
+        }
+    }    
+
 };
 
-let update_display = function () {
+let show_reminder = function (msg) {
+    // *** Switch OPERATION MODE ***
+    op_mode = MODE.REMIND;
+    clear_matrix();
+    scroll_text(msg);
+};
+
+let ack_reminder = function () {
+    stop_scroll_text();
+    op_mode = MODE.NORMAL;
+};
+
+let update_temp = function () {
     // if (forced_off) {
-    //     Log.print(Log.INFO, 'update_display: forced off, skip');
+    //     Log.print(Log.INFO, 'update_temp: forced off, skip');
     //     return;
     // }
 
     clear_matrix();
 
     if (current_temp === 'ERR') {
-        Log.print(Log.INFO, "update_display: eror reading temp");
-        
+        Log.print(Log.INFO, "update_temp: eror reading temp");
+
         show_char(3, '#'.at(0));
         return;
     }
 
     if (is_stale) {
-        Log.print(Log.INFO, "update_display: stale temp:" + current_temp);
+        Log.print(Log.INFO, "update_temp: stale temp:" + current_temp);
         show_char(3, STALE_SYMBOL);
     }
     else {
-        Log.print(Log.INFO, "update_display: current temp:" + current_temp);
+        Log.print(Log.INFO, "update_temp: current temp:" + current_temp);
         show_char(3, CELCIUS_SYMBOL);
     }
 
@@ -138,19 +186,25 @@ MQTT.sub(temp_topic, function (conn, topic, reading) {
     Log.print(Log.INFO, "mqttsub:temp is now:" + current_temp);
     last_update = Sys.uptime();
     is_stale = false;
-    update_display();
+    if (op_mode === MODE.NORMAL) {
+        update_temp();
+    }
 }, null);
 
 MQTT.setEventHandler(function (conn, ev, edata) {
     if (ev === MQTT.EV_CONNACK) {
         mqtt_connected = true;
         Log.print(Log.INFO, 'MQTT connected');
-        update_display();
+        if (op_mode === MODE.NORMAL) {
+            update_temp();
+        }
     }
     else if (ev === MQTT.EV_CLOSE) {
         mqtt_connected = false;
         Log.print(Log.ERROR, 'MQTT disconnected');
-        show_lost_conn();
+        if (op_mode === MODE.NORMAL) {
+            show_lost_conn();
+        }
     }
 
 }, null);
@@ -179,7 +233,14 @@ let main_loop_timer = Timer.set(1000 /* 1 sec */, Timer.REPEAT, function () {
     let tv = TouchPad.read(ts);
     if (tv < 3000) {
         Log.print(Log.INFO, 'touchpad pressed, value: ' + JSON.stringify(tv));
-        toggle_onoff();
+        if  (op_mode === MODE.REMIND) {
+            // treat as an acknowlegement of reminder
+            ack_reminder();
+            update_temp();
+        }
+        else {
+            toggle_onoff();
+        }
     }
 
     // every minute
@@ -187,7 +248,9 @@ let main_loop_timer = Timer.set(1000 /* 1 sec */, Timer.REPEAT, function () {
         tick_count = 0;
         if (mqtt_connected && !is_stale && (last_update < (Sys.uptime() - 1800))) {
             is_stale = true;
-            update_display();
+            if (op_mode === MODE.NORMAL) {
+                update_temp();
+            }
         }
         if (clock_sync) run_sch();
     }
@@ -203,5 +266,5 @@ GPIO.write(ALERT_LED_PIN, 1);
 // indicate we are up, 2 hearts
 show_char(0, 0x3); // heart
 show_char(1, 0x3); // heart
-rotate_char(); 
+rotate_char();
 Log.print(Log.WARN, "### init script started ###");
