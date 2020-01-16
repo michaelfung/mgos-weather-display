@@ -47,7 +47,7 @@ let op_mode = MODE.NORMAL;  // default in normal mode
 // reminder schedules
 // they must not be too close together to allow user time to acknowlege
 let rem_sch = [
-    { name: "test", enable: true, msg: "test reminder message ", hour: 15, min: 18 },
+    { name: "test", enable: true, msg: "test reminder message ", hour: 12, min: 40 },
     { name: "med", enable: true, msg: "take night time medicine", hour: 21, min: 30 }
 ];
 
@@ -113,27 +113,25 @@ let run_sch = function () {
             }
         }
     }    
-
 };
 
 let show_reminder = function (msg) {
     // *** Switch OPERATION MODE ***
     op_mode = MODE.REMIND;
     clear_matrix();
+    shutdown_matrix(RESUME_CMD);
     scroll_text(msg);
+    GPIO.blink(ALERT_LED_PIN, 500, 500);  // blink: on 100ms, off 900ms
 };
 
 let ack_reminder = function () {
+    GPIO.blink(ALERT_LED_PIN, 0, 0);  // disable blink
+    GPIO.write(ALERT_LED_PIN, 1); // turn off
     stop_scroll_text();
     op_mode = MODE.NORMAL;
 };
 
 let update_temp = function () {
-    // if (forced_off) {
-    //     Log.print(Log.INFO, 'update_temp: forced off, skip');
-    //     return;
-    // }
-
     clear_matrix();
 
     if (current_temp === 'ERR') {
@@ -208,6 +206,17 @@ MQTT.setEventHandler(function (conn, ev, edata) {
     }
 
 }, null);
+
+/* --- RPC Handlers --- */
+// SetReminder - instantly switch to REMIND mode and show a reminder message
+RPC.addHandler('SetReminder', function(args) {
+    if (typeof(args) === 'object' && typeof(args.reminder) === 'string') {
+      show_reminder(args.reminder);
+      return JSON.stringify({result: 'OK'});
+    } else {
+      return {error: -1, message: 'Bad request. Expected: {"reminder":"some reminder message"}'};
+    }       
+});
 
 // check sntp sync, to be replaced by sntp event handler after implemented by OS
 let clock_check_timer = Timer.set(10000, true /* repeat */, function () {

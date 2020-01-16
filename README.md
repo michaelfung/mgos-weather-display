@@ -18,8 +18,13 @@ Included a perl script to update the district weather at the MQTT server.
 
 ## Test
 
+Test display temperature update:
+
     mosquitto_pub -d -h hab2.lan -t "weather/hko/tsuenwan/temp" -m " 19"
 
+Test RPC handlers:
+
+    mos --port "http://wmatrix.lan/rpc" call SetReminder '{"reminder":"test rpc call  "}'
 
 ## Build Notes
 
