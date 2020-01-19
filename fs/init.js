@@ -33,6 +33,7 @@ let STALE_SYMBOL = 0x5; // degree celcius staled
 let current_temp = '---';
 let current_humid = '---';
 let temp_topic = 'weather/hko/tsuenwan/temp';
+let humid_topic = 'weather/hko/hk/humid';
 let timer_on_begin = Cfg.get('timer.on_hour') * 60;  // in minutes
 let timer_on_end = Cfg.get('timer.off_hour') * 60;
 

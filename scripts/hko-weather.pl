@@ -18,6 +18,7 @@ my $mqtt = Net::MQTT::Simple->new("hab2.lan");
 my $hko_url = 'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en';
 my $place = 'Tsuen Wan Shing Mun Valley';
 my $current_temp;
+my $current_humid;
 my $found = 0;
 my $ua  = Mojo::UserAgent->new;
 my $tries = 3;
@@ -35,6 +36,12 @@ while ($tries) {
             next;
         }
 
+        # post humidity
+        $current_humid = $json->{humidity}{data}[0]{value};        
+        my $humid_str = ($current_humid) ? sprintf("%3d", floor($current_humid)) : 'ERR';
+        $mqtt->retain( "weather/hko/hk/humid" => "$humid_str");
+        syslog("info", "Humidity: " .  $current_humid);
+
         for my $data (@{$json->{temperature}{data}}) {
             if ($data->{place} eq $place) {
                 $current_temp = $data->{value};
@@ -42,6 +49,7 @@ while ($tries) {
                 $found = 1;
             }
         }
+
         unless ($found) {
             syslog("error", "Error: data not found for location");
         }
@@ -60,7 +68,6 @@ while ($tries) {
         # format to string of integer
         my $temp_str = sprintf("%3d", floor($current_temp));
         $mqtt->retain( "weather/hko/tsuenwan/temp" => "$temp_str");
-        last;
     }
 }
 
