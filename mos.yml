@@ -64,5 +64,12 @@ config_schema:
   - ["max72xx","o", {title: "max72xx settings"}]  
   - ["max72xx.brightness", "i", 1, {title: "LED brightness, 0~15"}]
   - ["max72xx.scroll_delay", "i", 100, {title: "Scroll delay in ms"}]
+  # touchpad settings
+  - ["touch","o", {title: "touchpad event settings"}]  
+  - ["touch.poll_freq", "i", 100, {title: "touch poll interval, in ms"}]
+  - ["touch.threshold", "i", 500, {title: "threshold value"}]
+  - ["touch.long1", "i", 1500, {title: "LONG TOUCH1 event duration, in ms"}]
+  - ["touch.long2", "i", 5000, {title: "LONG TOUCH2 event duration, in ms"}]
+
 
 platform: esp32
