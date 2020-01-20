@@ -68,8 +68,8 @@ config_schema:
   - ["touch","o", {title: "touchpad event settings"}]  
   - ["touch.poll_freq", "i", 100, {title: "touch poll interval, in ms"}]
   - ["touch.threshold", "i", 500, {title: "threshold value"}]
-  - ["touch.long1", "i", 1500, {title: "LONG TOUCH1 event duration, in ms"}]
-  - ["touch.long2", "i", 5000, {title: "LONG TOUCH2 event duration, in ms"}]
+  - ["touch.long1", "i", 1000, {title: "LONG1 TOUCH event duration, in ms"}]
+  - ["touch.long2", "i", 5000, {title: "LONG2 TOUCH event duration, in ms"}]
 
 
 platform: esp32
