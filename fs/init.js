@@ -13,7 +13,7 @@ load('api_log.js');
 load('api_math.js');
 load('api_file.js');
 load('api_rpc.js');
-load('api_esp32_touchpad.js');
+load('api_events.js');
 
 // define variables
 let MG_EV_MQTT_CONNACK = 202;
@@ -41,15 +41,25 @@ let timer_on_end = Cfg.get('timer.off_hour') * 60;
 let MODE = {
     TEST: 0,
     NORMAL: 1, // show temp
-    REMIND: 2  // show reminder
+    HUMID: 2, // show himidity
+    INHOUSE: 3, // show in-house weather data
+    REMIND: 4,  // show reminder
 };
 let op_mode = MODE.NORMAL;  // default in normal mode
+
+// touchpad events
+let TpadEvent = {
+    TOUCH9: Event.baseNumber('TPE'),  // 'TPE' match 'TPAD_EVT_BASE' in main.c
+    UNTOUCH9: Event.baseNumber('TPE') + 1,
+    LONG1_TOUCH9: Event.baseNumber('TPE') + 2,
+    LONG2_TOUCH9: Event.baseNumber('TPE') + 3
+};
 
 // reminder schedules
 // they must not be too close together to allow user time to acknowlege
 let rem_sch = [
     { name: "test", enable: true, msg: "test reminder message ", hour: 12, min: 40 },
-    { name: "med", enable: true, msg: "take night time medicine", hour: 21, min: 30 }
+    { name: "med", enable: true, msg: "take evening dose   ", hour: 21, min: 30 }
 ];
 
 // ffi functions
@@ -85,27 +95,30 @@ let run_sch = function () {
     if (JSON.stringify(min_of_day) === JSON.stringify(timer_on_begin)) {
         Log.print(Log.INFO, '### run_sch: timer on reached, turn on matrix');
         forced_off = false;
-        shutdown_matrix(RESUME_CMD);        
+        shutdown_matrix(RESUME_CMD);
         return;
     }
 
     // off sch
     if (JSON.stringify(min_of_day) === JSON.stringify(timer_on_end)) {
-        Log.print(Log.INFO, '### run_sch: timer off reached, turn off matrix');
-        forced_off = true;
+        Log.print(Log.INFO, '### run_sch: timer off reached, turn off matrix');        
         if (op_mode === MODE.NORMAL) {
-            shutdown_matrix(SHUT_CMD);                     
+            forced_off = true;
+            shutdown_matrix(SHUT_CMD);
         }
         else if (op_mode === MODE.REMIND) {
-            Log.print(Log.INFO, '### run_sch: not in NORMAL mode, skip turn off');
+            Log.print(Log.INFO, '### run_sch: in REMIND mode, skip turn off');
+        }
+        else {
+            // other modes have their own logic
         }
     }
 
     // reminder sch
-    for (let i = 0; i < rem_sch.length; i++ ) {
+    for (let i = 0; i < rem_sch.length; i++) {
         if (JSON.stringify(min_of_day) === JSON.stringify(rem_sch[i].hour * 60 + rem_sch[i].min)) {
             if (rem_sch[i].enable) {
-                Log.print(Log.INFO, '### run_sch: reminder fire: ' + rem_sch[i].name);                
+                Log.print(Log.INFO, '### run_sch: fire reminder: ' + rem_sch[i].name);
                 show_reminder(rem_sch[i].msg);
                 break;  // no two reminder overlap
 
@@ -113,7 +126,7 @@ let run_sch = function () {
                 Log.print(Log.INFO, '### run_sch: reminder disabled: ' + rem_sch[i].name);
             }
         }
-    }    
+    }
 };
 
 let show_reminder = function (msg) {
@@ -157,6 +170,37 @@ let update_temp = function () {
     rotate_char();  // for the bold font issue
 };
 
+let update_humid = function () {
+    clear_matrix();
+
+    if (current_humid === 'ERR') {
+        Log.print(Log.INFO, "update_humid: eror reading humid");
+
+        show_char(3, '#'.at(0));
+        return;
+    }
+    else {
+        Log.print(Log.INFO, "update_humid: current humid:" + current_humid);
+        show_char(3, '%'.at(0));
+    }
+
+    show_char(2, current_humid.slice(2, 3).at(0));
+    show_char(1, current_humid.slice(1, 2).at(0));
+    show_char(0, current_humid.slice(0, 1).at(0));
+    rotate_char();  // for the bold font issue
+};
+
+let switch_to_humid_mode = function () {
+    op_mode = MODE.HUMID;
+    shutdown_matrix(RESUME_CMD);
+    update_humid();
+    // auto switch back to normal in 2 sec
+    Timer.set(2000, 0 /* once */, function () {
+        op_mode = MODE.NORMAL;
+        update_temp();
+    }, null);
+};
+
 let show_lost_conn = function () {
     clear_matrix();
     // use max72xx sys font and print string
@@ -190,6 +234,21 @@ MQTT.sub(temp_topic, function (conn, topic, reading) {
     }
 }, null);
 
+MQTT.sub(humid_topic, function (conn, topic, reading) {
+    Log.print(Log.DEBUG, 'rcvd humidity reading:' + reading);
+
+    // do a data copy instead of adding a reference to the data:
+    current_humid = '';
+    for (let i = 0; i < 3; i++) {
+        current_humid = current_humid + reading.slice(i, i + 1);
+    }
+
+    Log.print(Log.INFO, "mqttsub:humidity is now:" + current_humid);
+    if (op_mode === MODE.HUMID) {
+        update_humid();
+    }
+}, null);
+
 MQTT.setEventHandler(function (conn, ev, edata) {
     if (ev === MQTT.EV_CONNACK) {
         mqtt_connected = true;
@@ -210,13 +269,14 @@ MQTT.setEventHandler(function (conn, ev, edata) {
 
 /* --- RPC Handlers --- */
 // SetReminder - instantly switch to REMIND mode and show a reminder message
-RPC.addHandler('SetReminder', function(args) {
-    if (typeof(args) === 'object' && typeof(args.reminder) === 'string') {
-      show_reminder(args.reminder);
-      return JSON.stringify({result: 'OK'});
+RPC.addHandler('SetReminder', function (args) {
+    if (typeof (args) === 'object' && typeof (args.reminder) === 'string') {
+
+        show_reminder(args.reminder);
+        return JSON.stringify({ result: 'OK' });
     } else {
-      return {error: -1, message: 'Bad request. Expected: {"reminder":"some reminder message"}'};
-    }       
+        return { error: -1, message: 'Bad request. Expected: {"reminder":"some reminder message"}' };
+    }
 });
 
 // check sntp sync, to be replaced by sntp event handler after implemented by OS
@@ -230,48 +290,55 @@ let clock_check_timer = Timer.set(10000, true /* repeat */, function () {
     }
 }, null);
 
-// use touch sensor to toggle display
-let ts = TouchPad.GPIO[ACTION_PIN];
-TouchPad.init();
-TouchPad.setVoltage(TouchPad.HVOLT_2V5, TouchPad.LVOLT_0V8, TouchPad.HVOLT_ATTEN_1V5);
-TouchPad.config(ts, 0);
+// touchpad events handlers:
+Event.addHandler(TpadEvent.TOUCH9, function(ev, evdata, ud) {
+    Log.print(Log.INFO, 'handling TOUCH9');
+    if (op_mode === MODE.REMIND) {
+        // treat as an acknowlegement of reminder
+        ack_reminder();
+        update_temp();
+    }    
+    else if (forced_off) {
+        // op_mode = MODE.NORMAL;        
+        // update_temp();        
+    }
+    else if (op_mode === MODE.NORMAL) {
+        switch_to_humid_mode();    
+    }
+    else if (op_mode === MODE.HUMID) {
+        op_mode = MODE.NORMAL;        
+        update_temp();
+    }
+    else if (op_mode === MODE.INHOUSE) {
+        op_mode = MODE.NORMAL;        
+        update_temp();
+    }    
+    else {
+        //
+    }
+    
+}, null );
+
+Event.addHandler(TpadEvent.LONG1_TOUCH9, function(ev, evdata, ud) {
+    Log.print(Log.INFO, 'handling LONG1_TOUCH9');
+    toggle_onoff();
+}, null );
+
 
 // timer loop to update state and run schedule jobs
-let main_loop_timer = Timer.set(1000 /* 1 sec */, Timer.REPEAT, function () {
-    tick_count++;
-
-    let tv = TouchPad.read(ts);
-    if (tv < 3000) {
-        Log.print(Log.INFO, 'touchpad pressed, value: ' + JSON.stringify(tv));
-        if  (op_mode === MODE.REMIND) {
-            // treat as an acknowlegement of reminder
-            ack_reminder();
+let main_loop_timer = Timer.set(60000 /* 1 min */, Timer.REPEAT, function () {
+    if (mqtt_connected && !is_stale && (last_update < (Sys.uptime() - 1800))) {
+        is_stale = true;
+        if (op_mode === MODE.NORMAL) {
             update_temp();
         }
-        else {
-            toggle_onoff();
-        }
     }
-
-    // every minute
-    if (tick_count % 60 === 0) {
-        tick_count = 0;
-        if (mqtt_connected && !is_stale && (last_update < (Sys.uptime() - 1800))) {
-            is_stale = true;
-            if (op_mode === MODE.NORMAL) {
-                update_temp();
-            }
-        }
-        if (clock_sync) run_sch();
-    }
-
+    if (clock_sync) run_sch();
 }, null);
 
 // setup alert LED
 GPIO.set_mode(ALERT_LED_PIN, GPIO.MODE_OUTPUT);
-GPIO.write(ALERT_LED_PIN, 1);
-// GPIO.blink(ALERT_LED_PIN, 100, 900);  // blink: on 100ms, off 900ms
-
+GPIO.write(ALERT_LED_PIN, 1);  // switch led off
 
 // indicate we are up, 2 hearts
 show_char(0, 0x3); // heart
