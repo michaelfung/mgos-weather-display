@@ -57,7 +57,7 @@ let TpadEvent = {
 
 // reminder schedules
 // they must not be too close together to allow user time to acknowlege
-let rem_sch = [    
+let rem_sch = [
     { name: "med", enable: true, msg: "take evening dose   ", hour: 21, min: 30 }
 ];
 
@@ -220,17 +220,25 @@ MQTT.sub(temp_topic, function (conn, topic, reading) {
     Log.print(Log.DEBUG, 'rcvd temperature reading:' + reading);
 
     // do a data copy instead of adding a reference to the data:
-    current_temp = '';
+    let new_temp = '';
     for (let i = 0; i < 3; i++) {
-        current_temp = current_temp + reading.slice(i, i + 1);
+        new_temp = new_temp + reading.slice(i, i + 1);
     }
 
-    Log.print(Log.INFO, "mqttsub:temp is now:" + current_temp);
+    Log.print(Log.INFO, "mqttsub:temp is now:" + new_temp);
     last_update = Sys.uptime();
     is_stale = false;
-    if (op_mode === MODE.NORMAL) {
-        update_temp();
+
+    if (current_temp !== new_temp) {
+        current_temp = '';
+        for (let i = 0; i < 3; i++) {
+            current_temp = current_temp + reading.slice(i, i + 1);
+        }
+        if (op_mode === MODE.NORMAL) {
+            update_temp();
+        }
     }
+
 }, null);
 
 MQTT.sub(humid_topic, function (conn, topic, reading) {
