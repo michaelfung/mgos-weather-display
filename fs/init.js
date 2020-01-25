@@ -203,7 +203,7 @@ let switch_to_humid_mode = function () {
 let show_lost_conn = function () {
     clear_matrix();
     // use max72xx sys font and print string
-    print_string(chr(27) + "-X-" + chr(26));
+    print_string(chr(27) + "-X-" + chr(26) + chr(0));
 };
 
 let toggle_onoff = function () {
