@@ -57,8 +57,7 @@ let TpadEvent = {
 
 // reminder schedules
 // they must not be too close together to allow user time to acknowlege
-let rem_sch = [
-    { name: "test", enable: true, msg: "test reminder message ", hour: 12, min: 40 },
+let rem_sch = [    
     { name: "med", enable: true, msg: "take evening dose   ", hour: 21, min: 30 }
 ];
 
@@ -101,7 +100,7 @@ let run_sch = function () {
 
     // off sch
     if (JSON.stringify(min_of_day) === JSON.stringify(timer_on_end)) {
-        Log.print(Log.INFO, '### run_sch: timer off reached, turn off matrix');        
+        Log.print(Log.INFO, '### run_sch: timer off reached, turn off matrix');
         if (op_mode === MODE.NORMAL) {
             forced_off = true;
             shutdown_matrix(SHUT_CMD);
@@ -271,7 +270,6 @@ MQTT.setEventHandler(function (conn, ev, edata) {
 // SetReminder - instantly switch to REMIND mode and show a reminder message
 RPC.addHandler('SetReminder', function (args) {
     if (typeof (args) === 'object' && typeof (args.reminder) === 'string') {
-
         show_reminder(args.reminder);
         return JSON.stringify({ result: 'OK' });
     } else {
@@ -291,38 +289,38 @@ let clock_check_timer = Timer.set(10000, true /* repeat */, function () {
 }, null);
 
 // touchpad events handlers:
-Event.addHandler(TpadEvent.TOUCH9, function(ev, evdata, ud) {
+Event.addHandler(TpadEvent.TOUCH9, function (ev, evdata, ud) {
     Log.print(Log.INFO, 'handling TOUCH9');
     if (op_mode === MODE.REMIND) {
         // treat as an acknowlegement of reminder
         ack_reminder();
         update_temp();
-    }    
+    }
     else if (forced_off) {
         // op_mode = MODE.NORMAL;        
         // update_temp();        
     }
     else if (op_mode === MODE.NORMAL) {
-        switch_to_humid_mode();    
+        switch_to_humid_mode();
     }
     else if (op_mode === MODE.HUMID) {
-        op_mode = MODE.NORMAL;        
+        op_mode = MODE.NORMAL;
         update_temp();
     }
     else if (op_mode === MODE.INHOUSE) {
-        op_mode = MODE.NORMAL;        
+        op_mode = MODE.NORMAL;
         update_temp();
-    }    
+    }
     else {
         //
     }
-    
-}, null );
 
-Event.addHandler(TpadEvent.LONG1_TOUCH9, function(ev, evdata, ud) {
+}, null);
+
+Event.addHandler(TpadEvent.LONG1_TOUCH9, function (ev, evdata, ud) {
     Log.print(Log.INFO, 'handling LONG1_TOUCH9');
     toggle_onoff();
-}, null );
+}, null);
 
 
 // timer loop to update state and run schedule jobs
