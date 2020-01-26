@@ -37,6 +37,10 @@ let humid_topic = 'weather/hko/hk/humid';
 let timer_on_begin = Cfg.get('timer.on_hour') * 60;  // in minutes
 let timer_on_end = Cfg.get('timer.off_hour') * 60;
 
+// sntp sync event:
+// ref: https://community.mongoose-os.com/t/add-sntp-synced-event/1208?u=michaelfung
+let MGOS_EVENT_TIME_CHANGED = Event.SYS + 3; 
+
 // operation mode
 let MODE = {
     TEST: 0,
@@ -285,14 +289,13 @@ RPC.addHandler('SetReminder', function (args) {
     }
 });
 
-// check sntp sync, to be replaced by sntp event handler after implemented by OS
-let clock_check_timer = Timer.set(10000, true /* repeat */, function () {
-    if (Timer.now() > 1575763200 /* 2018-12-08 */) {
-        clock_sync = true;
-        Timer.del(clock_check_timer);
-        Log.print(Log.INFO, 'clock_check_timer: clock sync ok');
+// set sntp sync flag
+Event.addHandler(MGOS_EVENT_TIME_CHANGED, function (ev, evdata, ud) {
+    if (Timer.now() > 1577836800 /* 2020-01-01 */) {
+        clock_sync = true;        
+        Log.print(Log.INFO, 'mgos clock event: clock sync ok');
     } else {
-        Log.print(Log.INFO, 'clock_check_timer: clock not sync yet');
+        Log.print(Log.INFO, 'mgos clock event: clock not sync yet');
     }
 }, null);
 
