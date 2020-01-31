@@ -62,7 +62,7 @@ let TpadEvent = {
 // reminder schedules
 // they must not be too close together to allow user time to acknowlege
 let rem_sch = [
-    { name: "med", enable: true, msg: "take evening dose   ", hour: 21, min: 30 }
+    { name: "med", enable: true, msg: "take evening dose", hour: 21, min: 30 }
 ];
 
 // ffi functions
@@ -137,7 +137,7 @@ let show_reminder = function (msg) {
     op_mode = MODE.REMIND;
     clear_matrix();
     shutdown_matrix(RESUME_CMD);
-    scroll_text(msg);
+    scroll_text(msg + '   ' + chr(0));
     GPIO.blink(ALERT_LED_PIN, 500, 500);  // blink: on 100ms, off 900ms
 };
 
