@@ -21,6 +21,11 @@ my $current_temp;
 my $current_humid;
 my $found = 0;
 my $ua  = Mojo::UserAgent->new;
+$ua->connect_timeout(30)->request_timeout(60);
+$ua->on(error => sub {
+        my ($ua, $err) = @_;
+        syslog("error", "HTTP client error: " . $err);
+});
 my $tries = 3;
 
 while ($tries) {
@@ -56,11 +61,11 @@ while ($tries) {
     }
 
     elsif ($res->is_error) {
-        syslog("error", "Error message=" . $res->message);
+        syslog("error", "Error message: " . $res->message);
     }
 
     else {
-        syslog("error", "Error: HTTP Code=" . $res->code);
+        syslog("error", "Error: HTTP Code: " . $res->code);
     }
 
     # success, post to MQTT
