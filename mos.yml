@@ -1,7 +1,7 @@
 name: hk_weather_display
 author: Michael Fung <hkuser2001@gmail.com>
 description: Display weather using LED matrix
-version: 1.0_20200131r1
+version: 1.0_20200202r1
 manifest_version: 2017-09-29
 
 libs_version: ${mos_version}

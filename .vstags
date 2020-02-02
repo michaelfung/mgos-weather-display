@@ -4,3 +4,5 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+refresh_token	scripts/calendar-events/get-calendar-events.pl	42;"	s
+set_reminder	scripts/calendar-events/get-calendar-events.pl	86;"	s

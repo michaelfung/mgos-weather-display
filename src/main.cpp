@@ -28,6 +28,10 @@ uint16_t touch_threshold;
 // touch event
 //static int64_t last_touch_event = 0;  // us
 
+static uint8_t scroll_state = 0, scroll_curLen = 0, scroll_showLen = 0;
+static uint8_t print_state = 0, print_curLen = 0;
+static uint16_t print_showLen = 0;
+
 // for use with: void mgos_clear_timer(mgos_timer_id id);
 static mgos_timer_id scroll_timer_id = 0;
 static mgos_timer_id blink_display_timer_id = 0;
@@ -149,54 +153,51 @@ void printText(uint8_t modStart, uint8_t modEnd, char *pMsg)
 // Print the text string to the LED matrix modules specified.
 // Message area is padded with blank columns after printing.
 {
-    uint8_t state = 0;
-    uint8_t curLen = 0;
-    uint16_t showLen = 0;
     uint8_t cBuf[8];
     int16_t col = ((modEnd + 1) * COL_SIZE) - 1;
 
     //mx.control(modStart, modEnd, MD_MAX72XX::UPDATE, MD_MAX72XX::OFF);
 
-    do // finite state machine to print the characters in the space available
+    do // finite print_state machine to print the characters in the space available
     {
-        switch (state)
+        switch (print_state)
         {
         case 0: // Load the next character from the font table
             // if we reached end of message, reset the message pointer
             if (*pMsg == '\0')
             {
-                showLen = col - (modEnd * COL_SIZE); // padding characters
-                state = 2;
+                print_showLen = col - (modEnd * COL_SIZE); // padding characters
+                print_state = 2;
                 break;
             }
 
             // retrieve the next character form the font file
-            showLen = mx.getChar(*pMsg++, sizeof(cBuf) / sizeof(cBuf[0]), cBuf);
-            curLen = 0;
-            state++;
-            // !! deliberately fall through to next state to start displaying
+            print_showLen = mx.getChar(*pMsg++, sizeof(cBuf) / sizeof(cBuf[0]), cBuf);
+            print_curLen = 0;
+            print_state++;
+            // !! deliberately fall through to next print_state to start displaying
 
         case 1: // display the next part of the character
-            mx.setColumn(col--, cBuf[curLen++]);
+            mx.setColumn(col--, cBuf[print_curLen++]);
 
             // done with font character, now display the space between chars
-            if (curLen == showLen)
+            if (print_curLen == print_showLen)
             {
-                showLen = CHAR_SPACING;
-                state = 2;
+                print_showLen = CHAR_SPACING;
+                print_state = 2;
             }
             break;
 
-        case 2: // initialize state for displaying empty columns
-            curLen = 0;
-            state++;
+        case 2: // initialize print_state for displaying empty columns
+            print_curLen = 0;
+            print_state++;
             // fall through
 
         case 3: // display inter-character spacing or end of message padding (blank columns)
             mx.setColumn(col--, 0);
-            curLen++;
-            if (curLen == showLen)
-                state = 0;
+            print_curLen++;
+            if (print_curLen == print_showLen)
+                print_state = 0;
             break;
 
         default:
@@ -224,19 +225,17 @@ uint8_t scrollDataSource(uint8_t dev, MD_MAX72XX::transformType_t t)
 // Callback function for data that is required for scrolling into the display
 {
     static char *p = curMessage;
-    static uint8_t state = 0;
-    static uint8_t curLen = 0, showLen = 0;
     static uint8_t cBuf[8];
     uint8_t colData = 0;
     static bool lastChar = false;
 
-    // finite state machine to control what we do on the callback
-    switch (state)
+    // finite scroll_state machine to control what we do on the callback
+    switch (scroll_state)
     {
     case 0: // Load the next character from the font table
-        showLen = mx.getChar(*p++, sizeof(cBuf) / sizeof(cBuf[0]), cBuf);
-        curLen = 0;
-        state++;
+        scroll_showLen = mx.getChar(*p++, sizeof(cBuf) / sizeof(cBuf[0]), cBuf);
+        scroll_curLen = 0;
+        scroll_state++;
 
         // if we reached end of message, reset the message pointer
         if (*p == '\0')
@@ -253,24 +252,24 @@ uint8_t scrollDataSource(uint8_t dev, MD_MAX72XX::transformType_t t)
         {
             lastChar = false;
         }
-        // !! deliberately fall through to next state to start displaying
+        // !! deliberately fall through to next scroll_state to start displaying
 
     case 1: // display the next part of the character
-        colData = cBuf[curLen++];
-        if (curLen == showLen)
+        colData = cBuf[scroll_curLen++];
+        if (scroll_curLen == scroll_showLen)
         {
-            showLen = CHAR_SPACING;
-            curLen = 0;
-            state = 2;
+            scroll_showLen = CHAR_SPACING;
+            scroll_curLen = 0;
+            scroll_state = 2;
         }
         break;
 
     case 2: // display inter-character spacing (blank column)
         colData = 0;
-        curLen++;
-        if (curLen == showLen)
+        scroll_curLen++;
+        if (scroll_curLen == scroll_showLen)
         {
-            state = 0;
+            scroll_state = 0;
             if (lastChar)
             {
                 msgShown = true;
@@ -279,7 +278,7 @@ uint8_t scrollDataSource(uint8_t dev, MD_MAX72XX::transformType_t t)
         break;
 
     default:
-        state = 0;
+        scroll_state = 0;
     }
 
     return (colData);
@@ -342,6 +341,10 @@ extern "C" void f_print_string(char *msg)
     strncpy(curMessage, msg, len);
     mx.setFont(nullptr);
     mx.clear();
+    print_state = 0;
+    print_curLen = 0;
+    print_showLen = 0;
+
     printText(0, MAX_DEVICES - 1, curMessage);
     mx.update();
     setBoldNumericFont();
@@ -356,6 +359,10 @@ extern "C" void f_scroll_text(char *msg)
     mx.setFont(nullptr); // back to sys font
     mx.clear();
     mx.control(0, MAX_DEVICES - 1, MD_MAX72XX::UPDATE, MD_MAX72XX::ON);
+
+    scroll_state = 0;
+    scroll_curLen = 0;
+    scroll_showLen = 0;
     scrollTextLeft();
 }
 
