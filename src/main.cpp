@@ -171,7 +171,7 @@ void printText(uint8_t modStart, uint8_t modEnd, char *pMsg)
                 break;
             }
 
-            // retrieve the next character form the font file
+            // retrieve the next character from the font file
             print_showLen = mx.getChar(*pMsg++, sizeof(cBuf) / sizeof(cBuf[0]), cBuf);
             print_curLen = 0;
             print_state++;

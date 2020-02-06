@@ -24,7 +24,7 @@ my $ua  = Mojo::UserAgent->new;
 $ua->connect_timeout(30)->request_timeout(60);
 $ua->on(error => sub {
         my ($ua, $err) = @_;
-        syslog("error", "HTTP client error: " . $err);
+        syslog("err", "HTTP client error: " . $err);
 });
 my $tries = 3;
 
@@ -37,7 +37,7 @@ while ($tries) {
         my $json = $res->json;
 
         unless ($json) {
-            syslog("error", "invalid json data");
+            syslog("err", "invalid json data");
             next;
         }
 
@@ -56,16 +56,16 @@ while ($tries) {
         }
 
         unless ($found) {
-            syslog("error", "Error: data not found for location");
+            syslog("err", "Error: data not found for location");
         }
     }
 
     elsif ($res->is_error) {
-        syslog("error", "Error message: " . $res->message);
+        syslog("err", "Error message: " . $res->message);
     }
 
     else {
-        syslog("error", "Error: HTTP Code: " . $res->code);
+        syslog("err", "Error: HTTP Code: " . $res->code);
     }
 
     # success, post to MQTT
