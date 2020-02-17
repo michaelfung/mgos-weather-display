@@ -73,6 +73,7 @@ while ($tries) {
         # format to string of integer
         my $temp_str = sprintf("%3d", floor($current_temp));
         $mqtt->retain( "weather/hko/tsuenwan/temp" => "$temp_str");
+        next;
     }
 }
 
