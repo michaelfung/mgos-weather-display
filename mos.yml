@@ -1,7 +1,7 @@
 name: hk_weather_display
 author: Michael Fung <hkuser2001@gmail.com>
 description: Display weather using LED matrix
-version: 1.0_20200206r1
+version: 1.0_20200323r1
 manifest_version: 2017-09-29
 
 libs_version: ${mos_version}
@@ -28,7 +28,6 @@ libs:
   - origin: https://github.com/mongoose-os-libs/rpc-uart
   - origin: https://github.com/mongoose-os-libs/rpc-service-ota
   - origin: https://github.com/mongoose-os-libs/ota-http-server  
-  # - origin: https://github.com/mongoose-os-libs/vfs-dev-spi-flash
   - origin: https://github.com/mongoose-os-libs/spi
   - origin: https://github.com/mongoose-os-libs/arduino-compat
   - origin: https://github.com/mongoose-os-libs/arduino-spi
@@ -40,6 +39,9 @@ config_schema:
   - ["mqtt.enable", true]
   - ["mqtt.client_id", "wmatrix"]
   - ["mqtt.server", "hab2.lan:1883"]
+  - ["mqtt.will_topic", "wmatrix/link"]
+  - ["mqtt.will_message", "OFF"]
+  - ["mqtt.will_retain", true]  
   - ["wifi.ap.enable", false]
   - ["wifi.sta.enable", true]
   - ["wifi.ap.keep_enabled", false]
