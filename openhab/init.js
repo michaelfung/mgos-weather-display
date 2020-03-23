@@ -39,6 +39,7 @@ let hab_state_topic = thing_id + '/state';
 let hab_link_topic = thing_id + '/link';
 let timer_on_begin = Cfg.get('timer.on_hour') * 60;  // in minutes
 let timer_on_end = Cfg.get('timer.off_hour') * 60;
+let reminder_msg = null;
 
 // sntp sync event:
 // ref: https://community.mongoose-os.com/t/add-sntp-synced-event/1208?u=michaelfung
@@ -97,7 +98,8 @@ let update_state = function () {
     let pubmsg = JSON.stringify({
         uptime: uptime,
         memory: Sys.free_ram(),
-        mode: op_mode
+        mode: op_mode,
+        reminder: reminder_msg
     });
     let ok = MQTT.pub(hab_state_topic, pubmsg, 1, 1);
     Log.print(Log.INFO, 'Published:' + (ok ? 'OK' : 'FAIL') + ' topic:' + hab_state_topic + ' msg:' + pubmsg);    
@@ -153,7 +155,8 @@ let show_reminder = function (msg) {
     op_mode = MODE.REMIND;
     clear_matrix();
     shutdown_matrix(RESUME_CMD);
-    scroll_text(msg + '   ' + chr(0));
+    reminder_msg = msg;
+    scroll_text(msg + '   ');
     GPIO.blink(ALERT_LED_PIN, 500, 500);  // blink: on 100ms, off 900ms
     update_state();
 };
@@ -163,6 +166,7 @@ let ack_reminder = function () {
     GPIO.write(ALERT_LED_PIN, 1); // turn off
     stop_scroll_text();
     op_mode = MODE.NORMAL;
+    reminder_msg = null;
     update_state();
 };
 
