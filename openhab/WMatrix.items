@@ -1,0 +1,5 @@
+String WMatrix_Mode "Mode" {channel="mqtt:topic:local-broker:WMatrix:Mode"}
+String WMatrix_Reminder "Reminder Message" {channel="mqtt:topic:local-broker:WMatrix:Reminder"}
+Number WMatrix_RAM "Free RAM" {channel="mqtt:topic:local-broker:WMatrix:RAM"}
+String WMatrix_Uptime "Uptime" {channel="mqtt:topic:local-broker:WMatrix:Uptime"}
+Switch WMatrix_Link "Indictate connection state" {channel="mqtt:topic:local-broker:WMatrix:Link"}

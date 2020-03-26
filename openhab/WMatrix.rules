@@ -1,0 +1,30 @@
+var Timer timer = null
+var Number repeat_count = 0
+val MAX_REPEAT = 5
+
+rule "WMatrix_Mode_Changed"
+when    
+	Item WMatrix_Mode changed to "4"   // 4 is REMIND mode
+then    
+    logInfo("rules", "WMatrix reminder msg:" + WMatrix_Reminder.state)
+
+    timer = createTimer(now, [ |
+        if(WMatrix_Mode.state == "4") {  // still in remind mode?
+            // say reminder
+            Echo_TTS.sendCommand('<speak><prosody rate="slow">' + WMatrix_Reminder.state + '</prosody></speak>')
+
+            // check if repeat needed:
+            repeat_count += 1
+            if (repeat_count < MAX_REPEAT) {                
+                timer.reschedule(now.plusMillis(60000))   // repeat every minute
+            } else {
+                repeat_count = 0
+                timer = null
+            }
+        }
+        else {
+            timer = null
+        }
+    ])
+
+end

@@ -1,0 +1,10 @@
+sitemap devel label="Sample Map" {
+
+	Frame label="Weather Matrix" {
+        Text item=WMatrix_Mode label="Mode [MAP(wmatrix-mode.map):%s]" icon="settings"
+        Text item=WMatrix_RAM label="RAM Free [%d bytes]" icon="line-stagnation"
+		Text item=WMatrix_Uptime label="Uptime [%s]" icon="line-stagnation"
+        Text item=WMatrix_Link label="Link [MAP(link-state.map):%s]" icon="network"
+	}
+
+}

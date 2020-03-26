@@ -1,0 +1,11 @@
+Bridge mqtt:broker:local-broker [ host="127.0.0.1", qos=1, secure=false, clientID="openhab-conf-files"] {
+ 
+    Thing topic WMatrix "Weather Matrix" @ "Living Room" {
+        Channels:
+            Type string : Mode [stateTopic="wmatrix/state", transformationPattern="JSONPATH:$.mode"]
+            Type string : Reminder [stateTopic="wmatrix/state", transformationPattern="JSONPATH:$.reminder"]
+            Type string : Uptime [stateTopic="wmatrix/state", transformationPattern="JS:formatUptime.js"]
+            Type number : RAM [stateTopic="wmatrix/state", transformationPattern="JSONPATH:$.memory"]
+            Type switch : Link [stateTopic="wmatrix/link"]
+    }
+}
