@@ -93,10 +93,8 @@ Log.print(Log.INFO, 'Local time UTC offset: ' + JSON.stringify(tz_offset) + ' se
 
 // notify server of switch state
 let update_state = function () {
-    let uptime = Sys.uptime();
-
     let pubmsg = JSON.stringify({
-        uptime: uptime,
+        uptime: Sys.uptime(),
         memory: Sys.free_ram(),
         mode: op_mode,
         reminder: reminder_msg
@@ -257,7 +255,7 @@ MQTT.sub(temp_topic, function (conn, topic, reading) {
     }
 
     Log.print(Log.INFO, "mqttsub:temp is now:" + new_temp);
-    last_update = Sys.uptime();
+    last_update = Timer.now();
     is_stale = false;
 
     if (current_temp !== new_temp) {
@@ -370,7 +368,7 @@ Event.addHandler(TpadEvent.LONG1_TOUCH9, function (ev, evdata, ud) {
 // timer loop to update state and run schedule jobs
 let tick_count = 0;
 let main_loop_timer = Timer.set(60000 /* 1 min */, Timer.REPEAT, function () {
-    if (mqtt_connected && !is_stale && (last_update < (Sys.uptime() - 1800))) {
+    if (mqtt_connected && !is_stale && (last_update < (Timer.now() - 1800))) {
         is_stale = true;
         if (op_mode === MODE.NORMAL) {
             update_temp();
