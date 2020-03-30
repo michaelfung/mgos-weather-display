@@ -140,7 +140,7 @@ if (refresh_token()) {
 		my $next_event;
 		if ($res->code eq '200') {
 			unless ($next_event = $res->json->{items}[0]) {
-				syslog("info", "no event, exit");
+				syslog("info", "no events in the calendar at all, exit");
 				exit 0;
 			}
 
@@ -165,6 +165,8 @@ if (refresh_token()) {
 
 					# call set reminder rpc
 					set_reminder($next_event);
+				} else {
+					syslog("info", "no upcoming event, exit");
 				}
 			} else {
 
@@ -178,8 +180,18 @@ if (refresh_token()) {
 
 					# call set reminder rpc
 					set_reminder($next_event);
+				} else {
+					syslog("info", "no upcoming event, exit");
 				}
 			}
 		}
+		else {
+			syslog("err", sprintf("connection to google api failed, http code:%s", $res->code) );
+		}
 	}
+	else {
+		syslog("err", sprintf("connection to google api failed, error:%s", $res->message) );
+	}
+} else {
+	syslog("err", sprintf("refresh token failed, quit."));
 }

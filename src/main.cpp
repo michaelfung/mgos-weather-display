@@ -339,6 +339,7 @@ extern "C" void f_print_string(char *msg)
     if (len > BUF_SIZE)
         len = BUF_SIZE - 1;
     strncpy(curMessage, msg, len);
+    curMessage[len] = 0x0; // ensure null terminated
     mx.setFont(nullptr);
     mx.clear();
     print_state = 0;
@@ -356,6 +357,7 @@ extern "C" void f_scroll_text(char *msg)
     if (len > BUF_SIZE)
         len = BUF_SIZE - 1;
     strncpy(curMessage, msg, len);
+    curMessage[len] = 0x0;  // ensure null terminated
     mx.setFont(nullptr); // back to sys font
     mx.clear();
     mx.control(0, MAX_DEVICES - 1, MD_MAX72XX::UPDATE, MD_MAX72XX::ON);

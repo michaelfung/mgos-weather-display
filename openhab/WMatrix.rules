@@ -23,6 +23,7 @@ then
             }
         }
         else {
+            repeat_count = 0
             timer = null
         }
     ])

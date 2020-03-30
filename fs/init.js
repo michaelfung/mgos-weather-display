@@ -34,12 +34,16 @@ let current_temp = '---';
 let current_humid = '---';
 let temp_topic = 'weather/hko/tsuenwan/temp';
 let humid_topic = 'weather/hko/hk/humid';
+let thing_id = Cfg.get('mqtt.client_id');
+let hab_state_topic = thing_id + '/state';
+let hab_link_topic = thing_id + '/link';
 let timer_on_begin = Cfg.get('timer.on_hour') * 60;  // in minutes
 let timer_on_end = Cfg.get('timer.off_hour') * 60;
+let reminder_msg = null;
 
 // sntp sync event:
 // ref: https://community.mongoose-os.com/t/add-sntp-synced-event/1208?u=michaelfung
-let MGOS_EVENT_TIME_CHANGED = Event.SYS + 3; 
+let MGOS_EVENT_TIME_CHANGED = Event.SYS + 3;
 
 // operation mode
 let MODE = {
@@ -86,6 +90,20 @@ if (tz_sign === '-') {
     tz_offset = tz_offset * -1;
 }
 Log.print(Log.INFO, 'Local time UTC offset: ' + JSON.stringify(tz_offset) + ' seconds');
+
+// notify server of switch state
+let update_state = function () {
+    let uptime = Sys.uptime();
+
+    let pubmsg = JSON.stringify({
+        uptime: uptime,
+        memory: Sys.free_ram(),
+        mode: op_mode,
+        reminder: reminder_msg
+    });
+    let ok = MQTT.pub(hab_state_topic, pubmsg, 1, 1);
+    Log.print(Log.INFO, 'Published:' + (ok ? 'OK' : 'FAIL') + ' topic:' + hab_state_topic + ' msg:' + pubmsg);    
+};
 
 // check schedule and fire if time reached
 let run_sch = function () {
@@ -134,11 +152,16 @@ let run_sch = function () {
 
 let show_reminder = function (msg) {
     // *** Switch OPERATION MODE ***
+    if (op_mode = MODE.REMIND) {
+        stop_scroll_text();
+    }
     op_mode = MODE.REMIND;
     clear_matrix();
     shutdown_matrix(RESUME_CMD);
-    scroll_text(msg + '   ' + chr(0));
+    reminder_msg = msg;
+    scroll_text(msg + '   ');
     GPIO.blink(ALERT_LED_PIN, 500, 500);  // blink: on 100ms, off 900ms
+    update_state();
 };
 
 let ack_reminder = function () {
@@ -146,6 +169,8 @@ let ack_reminder = function () {
     GPIO.write(ALERT_LED_PIN, 1); // turn off
     stop_scroll_text();
     op_mode = MODE.NORMAL;
+    reminder_msg = null;
+    update_state();
 };
 
 let update_temp = function () {
@@ -197,10 +222,12 @@ let switch_to_humid_mode = function () {
     op_mode = MODE.HUMID;
     shutdown_matrix(RESUME_CMD);
     update_humid();
+    update_state();
     // auto switch back to normal in 2 sec
     Timer.set(2000, 0 /* once */, function () {
         op_mode = MODE.NORMAL;
         update_temp();
+        update_state();
     }, null);
 };
 
@@ -267,6 +294,10 @@ MQTT.setEventHandler(function (conn, ev, edata) {
         if (op_mode === MODE.NORMAL) {
             update_temp();
         }
+        // publish to the online topic        
+        let ok = MQTT.pub(hab_link_topic, 'ON', 1, 1); // qos=1, retain=1(true)
+        Log.print(Log.INFO, 'pub_online_topic:' + (ok ? 'OK' : 'FAIL') + ', msg: ON');        
+        update_state();
     }
     else if (ev === MQTT.EV_CLOSE) {
         mqtt_connected = false;
@@ -292,7 +323,7 @@ RPC.addHandler('SetReminder', function (args) {
 // set sntp sync flag
 Event.addHandler(MGOS_EVENT_TIME_CHANGED, function (ev, evdata, ud) {
     if (Timer.now() > 1577836800 /* 2020-01-01 */) {
-        clock_sync = true;        
+        clock_sync = true;
         Log.print(Log.INFO, 'mgos clock event: clock sync ok');
     } else {
         Log.print(Log.INFO, 'mgos clock event: clock not sync yet');
@@ -317,10 +348,12 @@ Event.addHandler(TpadEvent.TOUCH9, function (ev, evdata, ud) {
     else if (op_mode === MODE.HUMID) {
         op_mode = MODE.NORMAL;
         update_temp();
+        update_state();
     }
     else if (op_mode === MODE.INHOUSE) {
         op_mode = MODE.NORMAL;
         update_temp();
+        update_state();
     }
     else {
         //
@@ -335,6 +368,7 @@ Event.addHandler(TpadEvent.LONG1_TOUCH9, function (ev, evdata, ud) {
 
 
 // timer loop to update state and run schedule jobs
+let tick_count = 0;
 let main_loop_timer = Timer.set(60000 /* 1 min */, Timer.REPEAT, function () {
     if (mqtt_connected && !is_stale && (last_update < (Sys.uptime() - 1800))) {
         is_stale = true;
@@ -343,6 +377,12 @@ let main_loop_timer = Timer.set(60000 /* 1 min */, Timer.REPEAT, function () {
         }
     }
     if (clock_sync) run_sch();
+    tick_count++;
+    if (tick_count % 5 === 0) { /* 5 min */
+        tick_count = 0;
+        update_state();
+    }
+
 }, null);
 
 // setup alert LED
