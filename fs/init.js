@@ -96,6 +96,7 @@ let update_state = function () {
     let pubmsg = JSON.stringify({
         uptime: Sys.uptime(),
         memory: Sys.free_ram(),
+        timestamp: Math.floor(Timer.now()),
         mode: op_mode,
         reminder: reminder_msg
     });
