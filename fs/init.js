@@ -372,6 +372,7 @@ Event.addHandler(TpadEvent.LONG1_TOUCH9, function (ev, evdata, ud) {
 let tick_count = 0;
 let main_loop_timer = Timer.set(60000 /* 1 min */, Timer.REPEAT, function () {
     if (mqtt_connected && !is_stale && (last_update < (Timer.now() - 1800))) {
+        Log.print(Log.ERROR, 'set stale, last_update=' + JSON.stringify(last_update) + ', now=' + JSON.stringify(Timer.now()));
         is_stale = true;
         if (op_mode === MODE.NORMAL) {
             update_temp();
