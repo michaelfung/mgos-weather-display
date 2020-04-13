@@ -257,9 +257,9 @@ MQTT.sub(temp_topic, function (conn, topic, reading) {
 
     Log.print(Log.INFO, "mqttsub:temp is now:" + new_temp);
     last_update = Timer.now();
-    is_stale = false;
-
-    if (current_temp !== new_temp) {
+    
+    if (is_stale || (current_temp !== new_temp)) {
+        is_stale = false;
         current_temp = '';
         for (let i = 0; i < 3; i++) {
             current_temp = current_temp + reading.slice(i, i + 1);
@@ -267,6 +267,8 @@ MQTT.sub(temp_topic, function (conn, topic, reading) {
         if (op_mode === MODE.NORMAL) {
             update_temp();
         }
+    } else {
+        is_stale = false;
     }
 
 }, null);
