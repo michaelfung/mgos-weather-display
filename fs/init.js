@@ -66,7 +66,7 @@ let TpadEvent = {
 // reminder schedules
 // they must not be too close together to allow user time to acknowlege
 let rem_sch = [
-    { name: "med", enable: true, msg: "take evening dose", hour: 21, min: 30 }
+    { name: "med", enable: true, msg: "please take the evening dose", hour: 21, min: 30 }
 ];
 
 // ffi functions
