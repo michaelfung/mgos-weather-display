@@ -7,6 +7,7 @@ A simple weather display using LED matrix for the elderly. Powered by Mongoose O
 - display temperature by default
 - display humidity when action touchpad is touched
 - display can be turned off by *long touch*
+- display can be turned on/off by a preset schedule
 - display reminder message at preset time daily, e.g. take medical dose
 - display reminder message for Google Calendar Events with the help of an external script
 
@@ -33,6 +34,16 @@ Use GCP to create a service account and download the JSON file.
 Go to calendar settings and share the calendar with the email address of the service account.
 
 Run the **get-calendar-events.pl** perl script periodically.
+
+## Set display on/off schedule
+
+Example, set on at 6AM and off at 10PM:
+
+    mos --port "http://wmatrix.lan/rpc" config-set timer.off_hour=22 timer.on_hour=6
+
+Disable the schedule by setting on/off hour to negative number:
+
+    mos --port "http://wmatrix.lan/rpc" config-set timer.off_hour=-1 timer.on_hour=-1
 
 ## Test
 
