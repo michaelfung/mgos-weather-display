@@ -29,7 +29,7 @@ let forced_off = false;
 let last_update = 0;
 let is_stale = true;
 let CELCIUS_SYMBOL = 0x4;  // degree celcius char code
-let STALE_SYMBOL = 0x5; // degree celcius staled 
+let STALE_SYMBOL = 0x5; // degree celcius staled
 let current_temp = '---';
 let current_humid = '---';
 let temp_topic = 'weather/hko/tsuenwan/temp';
@@ -101,7 +101,7 @@ let update_state = function () {
         reminder: reminder_msg
     });
     let ok = MQTT.pub(hab_state_topic, pubmsg, 1, 1);
-    Log.print(Log.INFO, 'Published:' + (ok ? 'OK' : 'FAIL') + ' topic:' + hab_state_topic + ' msg:' + pubmsg);    
+    Log.print(Log.INFO, 'Published:' + (ok ? 'OK' : 'FAIL') + ' topic:' + hab_state_topic + ' msg:' + pubmsg);
 };
 
 // check schedule and fire if time reached
@@ -159,13 +159,13 @@ let show_reminder = function (msg) {
     shutdown_matrix(RESUME_CMD);
     reminder_msg = msg;
     scroll_text(msg + '   ');
-    GPIO.blink(ALERT_LED_PIN, 500, 500);  // blink: on 100ms, off 900ms
+    // GPIO.blink(ALERT_LED_PIN, 500, 500);  // blink: on 100ms, off 900ms
     update_state();
 };
 
 let ack_reminder = function () {
-    GPIO.blink(ALERT_LED_PIN, 0, 0);  // disable blink
-    GPIO.write(ALERT_LED_PIN, 1); // turn off
+    // GPIO.blink(ALERT_LED_PIN, 0, 0);  // disable blink
+    // GPIO.write(ALERT_LED_PIN, 1); // turn off
     stop_scroll_text();
     op_mode = MODE.NORMAL;
     reminder_msg = null;
@@ -257,7 +257,7 @@ MQTT.sub(temp_topic, function (conn, topic, reading) {
 
     Log.print(Log.INFO, "mqttsub:temp is now:" + new_temp);
     last_update = Timer.now();
-    
+
     if (is_stale || (current_temp !== new_temp)) {
         is_stale = false;
         current_temp = '';
@@ -295,9 +295,9 @@ MQTT.setEventHandler(function (conn, ev, edata) {
         if (op_mode === MODE.NORMAL) {
             update_temp();
         }
-        // publish to the online topic        
+        // publish to the online topic
         let ok = MQTT.pub(hab_link_topic, 'ON', 1, 1); // qos=1, retain=1(true)
-        Log.print(Log.INFO, 'pub_online_topic:' + (ok ? 'OK' : 'FAIL') + ', msg: ON');        
+        Log.print(Log.INFO, 'pub_online_topic:' + (ok ? 'OK' : 'FAIL') + ', msg: ON');
         update_state();
     }
     else if (ev === MQTT.EV_CLOSE) {
@@ -340,8 +340,8 @@ Event.addHandler(TpadEvent.TOUCH9, function (ev, evdata, ud) {
         update_temp();
     }
     else if (forced_off) {
-        // op_mode = MODE.NORMAL;        
-        // update_temp();        
+        // op_mode = MODE.NORMAL;
+        // update_temp();
     }
     else if (op_mode === MODE.NORMAL) {
         switch_to_humid_mode();
@@ -369,7 +369,6 @@ Event.addHandler(TpadEvent.LONG1_TOUCH9, function (ev, evdata, ud) {
 
 
 // timer loop to update state and run schedule jobs
-let tick_count = 0;
 let main_loop_timer = Timer.set(60000 /* 1 min */, Timer.REPEAT, function () {
     if (mqtt_connected && !is_stale && (last_update < (Timer.now() - 1800))) {
         Log.print(Log.ERROR, 'set stale, last_update=' + JSON.stringify(last_update) + ', now=' + JSON.stringify(Timer.now()));
