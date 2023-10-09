@@ -321,6 +321,12 @@ RPC.addHandler('SetReminder', function (args) {
     }
 });
 
+// Force Normal mode, act as Ack Reminder
+RPC.addHandler('SetNormalMode', function () {
+    ack_reminder();
+    update_temp();
+});
+
 // set sntp sync flag
 Event.addHandler(MGOS_EVENT_TIME_CHANGED, function (ev, evdata, ud) {
     if (Timer.now() > 1577836800 /* 2020-01-01 */) {
