@@ -55,6 +55,8 @@ Test RPC handlers:
 
     mos --port "http://wmatrix.lan/rpc" call SetReminder '{"reminder":"test rpc call  "}'
 
+    mos --port "http://wmatrix.lan/rpc" call SetNormalMode '{}'
+
 ## Build Notes
 
 To compile with custom library, add it to `mos.yml` like:

@@ -325,6 +325,7 @@ RPC.addHandler('SetReminder', function (args) {
 RPC.addHandler('SetNormalMode', function () {
     ack_reminder();
     update_temp();
+    return JSON.stringify({ result: 'OK' });
 });
 
 // set sntp sync flag
