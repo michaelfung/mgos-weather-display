@@ -315,7 +315,7 @@ MQTT.setEventHandler(function (conn, ev, edata) {
 RPC.addHandler('SetReminder', function (args) {
     if (typeof (args) === 'object' && typeof (args.reminder) === 'string') {
         show_reminder(args.reminder);
-        return JSON.stringify({ result: 'OK' });
+        return 'OK';
     } else {
         return { error: -1, message: 'Bad request. Expected: {"reminder":"some reminder message"}' };
     }
@@ -325,7 +325,7 @@ RPC.addHandler('SetReminder', function (args) {
 RPC.addHandler('SetNormalMode', function () {
     ack_reminder();
     update_temp();
-    return JSON.stringify({ result: 'OK' });
+    return 'OK';
 });
 
 // set sntp sync flag
